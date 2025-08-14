@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Usuarios</title>
+  <link rel="stylesheet" href="css/usuarios.css">
+</head>
+<body>
+
+<div class="aprendices-container">
+
+  <div class="barra-superior">
+    <a href="#" class="btn-volver">Volver</a>
+    <h1>Lista de Usuarios</h1>
+    <a href="#" class="btn-crear">+ Crear Usuario</a>
+  </div>
+
+  <form method="get" class="box">
+        <input type="text" id="busqueda" name="busqueda" placeholder="Buscar por nombre o documento" class="busqueda">
+        <button type="submit" class="btn-editar">Buscar</button>
+    </form>
+
+  <table id="tabla-aprendices">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Documento</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Juan Pérez</td>
+        <td>123456789</td>
+        <td>Admin</td>
+        <td>
+          <a href="#" class="btn-editar">Editar</a>
+          <button class="btn-eliminar">Eliminar</button>
+        </td>
+      </tr>
+      <tr>
+        <td>María López</td>
+        <td>987654321</td>
+        <td>Usuario</td>
+        <td>
+          <a href="#" class="btn-editar">Editar</a>
+          <button class="btn-eliminar">Eliminar</button>
+        </td>
+      </tr>
+      <tr>
+        <td>Carlos Gómez</td>
+        <td>456789123</td>
+        <td>Supervisor</td>
+        <td>
+          <a href="#" class="btn-editar">Editar</a>
+          <button class="btn-eliminar">Eliminar</button>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4">No hay usuarios registrados.</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+</body>
+</html>
