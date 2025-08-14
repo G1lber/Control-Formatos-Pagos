@@ -10,7 +10,7 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   background-color: var(--color-fondo);
   color: var(--color-texto);
   margin: 0;

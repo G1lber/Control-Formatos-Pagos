@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Revisión</title>
+    <link rel="stylesheet" href="css/revision.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Lista de Revisión</h1>
+
+        <!-- Card de filtros -->
+        <div class="filtros-card">
+            <button class="filtro activo" data-filtro="todos">Todos</button>
+            <button class="filtro" data-filtro="pendiente">Pendientes</button>
+            <button class="filtro" data-filtro="revisado">Revisados</button>
+            <button class="filtro" data-filtro="sin-archivo">Sin archivo</button>
+        </div>
+
+        <!-- Tabla de revisión -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Archivo</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-revision">
+                <tr data-estado="pendiente">
+                    <td>Juan Pérez</td>
+                    <td>documento.pdf</td>
+                    <td>12/08/2025</td>
+                    <td><span class="estado pendiente">Pendiente</span></td>
+                    <td><button class="btn-revisar">Revisar</button></td>
+                </tr>
+                <tr data-estado="revisado">
+                    <td>María López</td>
+                    <td>contrato.docx</td>
+                    <td>12/08/2025</td>
+                    <td><span class="estado revisado">Revisado</span></td>
+                    <td><button class="btn-revisar">Ver</button></td>
+                </tr>
+                <tr data-estado="sin-archivo">
+                    <td>Carlos Gómez</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><span class="estado sin-archivo">Sin archivo</span></td>
+                    <td><button class="btn-revisar">Recordar</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Filtrado de la tabla
+        document.querySelectorAll(".filtro").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".filtro").forEach(b => b.classList.remove("activo"));
+                btn.classList.add("activo");
+                let filtro = btn.dataset.filtro;
+                
+                document.querySelectorAll("#tabla-revision tr").forEach(row => {
+                    if (filtro === "todos" || row.dataset.estado === filtro) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

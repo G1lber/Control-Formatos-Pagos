@@ -37,7 +37,7 @@ a.btn:hover {
 body {
   display: flex;
   justify-content: center;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   align-items: center;
   min-height: 100vh;
   margin: 0;
