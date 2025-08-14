@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisión de Archivos</title>
+    <link rel="stylesheet" href="css/revision2.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Card de Notificaciones -->
+        <div class="notificaciones-card">
+            <h2>Notificaciones</h2>
+            <div class="notificacion">
+                <div class="info">
+                    <p><strong>Juan Pérez</strong> subió <em>documento.pdf</em></p>
+                    <small>12/08/2025 - 10:35 AM</small>
+                </div>
+                <button class="btn-revisar">Revisar</button>
+            </div>
+
+            <div class="notificacion">
+                <div class="info">
+                    <p><strong>María López</strong> subió <em>contrato.docx</em></p>
+                    <small>12/08/2025 - 09:12 AM</small>
+                </div>
+                <button class="btn-revisar">Revisar</button>
+            </div>
+
+            <div class="notificacion">
+                <div class="info">
+                    <p><strong>Carlos Gómez</strong> subió <em>foto.png</em></p>
+                    <small>11/08/2025 - 04:50 PM</small>
+                </div>
+                <button class="btn-revisar">Revisar</button>
+            </div>
+        </div>
+
+        <!-- Tabla de revisión -->
+        <div class="tabla-card">
+            <h2>Lista de Revisión</h2>
+
+            <!-- Filtros -->
+            <div class="filtros">
+                <button class="filtro activo">Pendientes</button>
+                <button class="filtro">Revisados</button>
+                <button class="filtro">Sin archivo</button>
+            </div>
+
+            <!-- Tabla -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Archivo</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Juan Pérez</td>
+                        <td>documento.pdf</td>
+                        <td>12/08/2025</td>
+                        <td>Pendiente</td>
+                        <td><button class="btn-revisar">Revisar</button></td>
+                    </tr>
+                    <tr>
+                        <td>María López</td>
+                        <td>contrato.docx</td>
+                        <td>12/08/2025</td>
+                        <td>Revisado</td>
+                        <td><button class="btn-revisar">Revisar</button></td>
+                    </tr>
+                    <tr>
+                        <td>Carlos Gómez</td>
+                        <td>foto.png</td>
+                        <td>11/08/2025</td>
+                        <td>Sin archivo</td>
+                        <td><button class="btn-revisar">Revisar</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

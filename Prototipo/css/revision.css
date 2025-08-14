@@ -1,108 +1,169 @@
+:root {
+  --color-principal: #39A900;
+  --color-secundario: #002b46;
+  --color-blanco: #ffffff;
+  --color-fondo: #f4f7fa;
+  --color-texto: #002b46;
+  --color-hover: #2b8500;
+  --color-sombra: rgba(0, 0, 0, 0.08);
+  --color-eliminar: #d9534f;
+}
+
 body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #f5f8fb;
-    margin: 0;
-    padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  margin: 0;
+  padding: 30px 20px;
 }
 
-.container {
-    max-width: 900px;
-    margin: auto;
-}
-
-h1 {
-    text-align: center;
-    color: #2ca002;
-    margin-bottom: 20px;
+.revision-container {
+  max-width: 1100px;
+  margin: auto;
+  background-color: var(--color-blanco);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px var(--color-sombra);
 }
 
 /* Card de filtros */
 .filtros-card {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+  background-color: var(--color-blanco);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px var(--color-sombra);
+  margin-bottom: 25px;
+  text-align: center;
 }
 
-.filtro {
-    background: #e6e6e6;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
+.filtros-card h2 {
+  margin-bottom: 15px;
+  color: var(--color-secundario);
 }
 
-.filtro.activo {
-    background: #2ca002;
-    color: white;
+.filtros-botones {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
-.filtro:hover {
-    background: #238302;
-    color: white;
+.btn-filtro {
+  background-color: var(--color-secundario);
+  color: var(--color-blanco);
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-/* Tabla */
+.btn-filtro:hover {
+  background-color: #01446f;
+}
+
+.btn-filtro.activo {
+  background-color: var(--color-principal);
+}
+
+.box{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.box input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#busqueda {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.btn-editar {
+  background-color: var(--color-secundario);
+  color: var(--color-blanco);
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 14px;
+  text-decoration: none;
+  border: none;
+  transition: background-color 0.3s ease;
+  gap: 30px;
+}
+
+.btn-editar:hover {
+  background-color: #01446f;
+}
+
 table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 100%;
+  border-collapse: collapse;
 }
 
 thead {
-    background: #2ca002;
-    color: white;
+  background-color: var(--color-secundario);
+  color: var(--color-blanco);
 }
 
 th, td {
-    padding: 12px;
-    text-align: left;
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
-tr:nth-child(even) {
-    background: #f8f8f8;
+tbody tr:hover {
+  background-color: #f0f5f5;
 }
 
 .estado {
-    padding: 4px 10px;
-    border-radius: 5px;
-    font-size: 13px;
-    font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: var(--color-blanco);
 }
 
 .estado.pendiente {
-    background: #ffcc00;
-    color: #333;
+  background-color: #f0ad4e;
 }
 
 .estado.revisado {
-    background: #2ca002;
-    color: white;
+  background-color: var(--color-principal);
 }
 
 .estado.sin-archivo {
-    background: #d9534f;
-    color: white;
+  background-color: var(--color-eliminar);
 }
 
 .btn-revisar {
-    background-color: #2ca002;
-    border: none;
-    color: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
+  background-color: var(--color-principal);
+  color: var(--color-blanco);
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .btn-revisar:hover {
-    background-color: #238302;
+  background-color: var(--color-hover);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  th, td {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .filtros-botones {
+    flex-direction: column;
+  }
 }
