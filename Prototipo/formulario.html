@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Formulario</title>
+  <link rel="stylesheet" href="css/formulario.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Botón Volver -->
+    <a href="index.html" class="btn-volver" >Volver</a>
+
+    <form class="form-card">
+      <h2>Formulario de Registro</h2>
+
+      <label for="correo">Correo electrónico</label>
+      <input type="email" id="correo" name="correo" placeholder="ejemplo@correo.com" required>
+
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required>
+
+      <label for="documento">Número de documento</label>
+      <input type="text" id="documento" name="documento" placeholder="123456789" required>
+
+      <label for="archivo">Subir archivo</label>
+      <input type="file" id="archivo" name="archivo" required>
+
+      <button type="submit" class="btn-enviar">Enviar</button>
+    </form>
+  </div>
+</body>
+</html>
