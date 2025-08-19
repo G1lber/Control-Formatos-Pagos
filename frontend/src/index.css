@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Si quieres paleta personalizada puedes agregar aquí */
+@theme {
+  --color-principal:  #39A900;
+  --color-secundario: #002b46;
+  --color-blanco:     #ffffff;
+  --color-fondo:      #f4f7fa;
+  --color-texto:      #002b46;
+  --color-hover:      #2b8500;
+  --color-sombra:     rgba(0, 0, 0, 0.08);
+  --borde-input:      #dcdcdc;
+}
