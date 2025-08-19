@@ -31,7 +31,7 @@ export default function Card() {
           shadow-md hover:bg-hover transition
         "
       >
-        Ir al Formulario
+        Formulario
       </a>
     </motion.div>
   );
