@@ -13,6 +13,18 @@ export async function up(knex) {
     });
   }
 
+  // Crear tabla estados
+  const existsEstados = await knex.schema.hasTable("estados");
+  if (!existsEstados) {
+    await knex.schema.createTable("estados", (table) => {
+      table.increments("id").primary();
+      table.string("nombre_estado", 50).notNullable();
+    });
+
+    // Insertar estado inicial
+    await knex("estados").insert([{ nombre_estado: "pendiente" }]);
+  }
+
   // Crear tabla documentos
   const existsDocs = await knex.schema.hasTable("documentos");
   if (!existsDocs) {
@@ -21,8 +33,16 @@ export async function up(knex) {
       table.string("correo", 50);
       table.string("nombre", 50);
       table.string("numero_doc", 50).unique();
-      table.string("archivo1", 50);
-      table.string("archivo2", 50);
+      table.string("archivo1", 255);
+      table.string("archivo2", 255);
+      table
+        .integer("estado_id")
+        .unsigned()
+        .references("id")
+        .inTable("estados")
+        .onDelete("SET NULL")
+        .onUpdate("CASCADE")
+        .defaultTo(1); // estado pendiente
       table.dateTime("fecha").defaultTo(knex.fn.now());
     });
   }
@@ -34,5 +54,6 @@ export async function up(knex) {
  */
 export async function down(knex) {
   await knex.schema.dropTableIfExists("documentos");
+  await knex.schema.dropTableIfExists("estados");
   await knex.schema.dropTableIfExists("admin");
 }
