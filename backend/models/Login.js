@@ -9,7 +9,7 @@ class Login extends Model {
   static get relationMappings() {
 
     return {
-      usuario: {
+      usuario_rel: {
         relation: Model.BelongsToOneRelation,
         modelClass: Usuario,
         join: {

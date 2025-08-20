@@ -43,7 +43,7 @@ const createUsuario = async (req, res) => {
 
     // Si el rol es admin → requiere contraseña
     const rol = await Rol.query().findById(rol_id);
-    if (rol && rol.nombre === "admin") {
+    if (rol && rol.nombre_rol === "admin") {
       if (!password) {
         return res.status(400).json({ error: "La contraseña es obligatoria para admin" });
       }
