@@ -1,25 +1,23 @@
-import pool from "../config/db.js";
+import { Model } from "objection";
 
-class Estado {
-  // Crear nuevo estado
-  static async create(nombre_estado) {
-    const [result] = await pool.query(
-      "INSERT INTO estados (nombre_estado) VALUES (?)",
-      [nombre_estado]
-    );
-    return { id: result.insertId, nombre_estado };
+class Estado extends Model {
+  static get tableName() {
+    return "estados";
   }
 
-  // Buscar estado por ID
-  static async findById(id) {
-    const [rows] = await pool.query("SELECT * FROM estados WHERE id = ?", [id]);
-    return rows[0];
-  }
+  static get relationMappings() {
+    const Documento = require("./Documento.js");
 
-  // Obtener todos los estados
-  static async getAll() {
-    const [rows] = await pool.query("SELECT * FROM estados");
-    return rows;
+    return {
+      documentos: {
+        relation: Model.HasManyRelation,
+        modelClass: Documento,
+        join: {
+          from: "estados.id",
+          to: "documentos.estado_id",
+        },
+      },
+    };
   }
 }
 
