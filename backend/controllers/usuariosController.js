@@ -81,7 +81,7 @@ const updateUsuario = async (req, res) => {
     });
 
     // Si pasa de usuario → admin
-    if (rolAnterior.nombre !== "admin" && rolNuevo.nombre === "admin") {
+    if (rolAnterior.nombre_rol !== "admin" && rolNuevo.nombre_rol === "admin") {
       if (!password) {
         return res.status(400).json({ error: "Debe asignar contraseña al cambiar a admin" });
       }
@@ -94,13 +94,13 @@ const updateUsuario = async (req, res) => {
     }
 
     // Si sigue siendo admin y cambia contraseña
-    if (rolAnterior.nombre === "admin" && rolNuevo.nombre === "admin" && password) {
+    if (rolAnterior.nombre_rol === "admin" && rolNuevo.nombre_rol === "admin" && password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       await Login.query().patch({ password: hashedPassword }).where("usuario", usuario.id);
     }
 
     // Si pasa de admin → usuario
-    if (rolAnterior.nombre === "admin" && rolNuevo.nombre !== "admin") {
+    if (rolAnterior.nombre_rol === "admin" && rolNuevo.nombre_rol !== "admin") {
       await Login.query().delete().where("usuario", usuario.id);
     }
 
