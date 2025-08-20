@@ -1,4 +1,7 @@
 import { Model } from "objection";
+import Documento from "./Documentos.js"
+import Login from "./Login.js";
+import Rol from "./Rol.js"; 
 
 class Usuario extends Model {
   static get tableName() {
@@ -6,10 +9,6 @@ class Usuario extends Model {
   }
 
   static get relationMappings() {
-    const Documento = require("./Documento.js");
-    const Login = require("./Login.js");
-    const Rol = require("./Rol.js");
-
     return {
       documentos: {
         relation: Model.HasManyRelation,

@@ -1,4 +1,7 @@
-export default {
+// knexfile.js
+require("dotenv").config();
+
+module.exports = {
   development: {
     client: "mysql2",
     connection: {
@@ -8,10 +11,10 @@ export default {
       database: process.env.DB_NAME || "formatos_pagos",
     },
     migrations: {
-      directory: "./migrations"
+      directory: "./migrations",
     },
     seeds: {
-      directory: "./seeds"
-    }
-  }
+      directory: "./seeds",
+    },
+  },
 };

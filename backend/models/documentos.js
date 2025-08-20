@@ -1,4 +1,6 @@
 import { Model } from "objection";
+import Usuario from "./Usuario.js";
+import Estado from "./Estado.js";
 
 class Documento extends Model {
   static get tableName() {
@@ -6,8 +8,6 @@ class Documento extends Model {
   }
 
   static get relationMappings() {
-    const Usuario = require("./Usuario.js");
-    const Estado = require("./Estado.js");
 
     return {
       usuario: {

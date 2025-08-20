@@ -1,21 +1,25 @@
-// backend/index.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import userRoutes from "./routes/users.js";
+import { Model } from "objection";
+import userRoutes from "./routes/usuarios.js";
+import knex from "./config/db.js";
 
 dotenv.config();
 const app = express();
 
-// 🔥 importante: habilitar cors solo para el front
+// 🔥 Habilitar cors solo para el front
 app.use(cors({
-  origin: "http://localhost:5173", // puerto de Vite
+  origin: "http://localhost:5173",
   credentials: true
 }));
 app.use(express.json());
 
+// 🔹 Enlazar Objection con Knex
+Model.knex(knex);
+
 // rutas
-app.use("/api/users", userRoutes);
+app.use("/api/usuarios", userRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
