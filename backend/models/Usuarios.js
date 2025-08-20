@@ -8,6 +8,7 @@ class Usuario extends Model {
   static get relationMappings() {
     const Documento = require("./Documento.js");
     const Login = require("./Login.js");
+    const Rol = require("./Rol.js");
 
     return {
       documentos: {
@@ -24,6 +25,14 @@ class Usuario extends Model {
         join: {
           from: "usuarios.id",
           to: "login.usuario",
+        },
+      },
+      rol: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Rol,
+        join: {
+          from: "usuarios.rol_id",
+          to: "roles.id",
         },
       },
     };
