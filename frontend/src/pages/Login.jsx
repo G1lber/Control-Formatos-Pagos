@@ -17,7 +17,7 @@ export default function Login() {
         Volver
       </a>
 
-      <div className=" bg-[var(--color-blanco)] p-[40px] px-[30px] rounded-2xl shadow-[0_15px_40px_var(--color-sombra)]w-full max-w-[400px] box-border animate-fadeIn text-center">
+      <div className=" bg-[var(--color-blanco)] p-[40px] px-[30px] rounded-2xl shadow-[0_15px_40px_var(--color-sombra)] w-full max-w-[400px] box-border animate-fadeIn text-center">
         {/* Logo superior */}
         <div className="mb-4 flex justify-center space-y-2">
           <img src="/img/sena-logo.png" alt="Logo SENA" className="h-15" />
@@ -60,6 +60,18 @@ export default function Login() {
             Entrar
           </button>
         </form>
+
+        {/* Enlaces adicionales */}
+        <div className="mt-6 text-sm space-y-2">
+          <p>
+            <a
+              href="/recuperar-password"
+              className="text-[var(--color-principal)] hover:underline font-medium"
+            >
+              ¿Olvidaste tu contraseña?
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
