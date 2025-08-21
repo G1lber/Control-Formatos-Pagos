@@ -19,7 +19,7 @@ export default function Card() {
       </h1>
 
       <p className="mb-6 text-texto text-sm sm:text-base">
-        Accede al formulario para cargar tus formatos de "XXXXXX".
+        Accede al formulario para cargar tus formatos de GC, GF....
       </p>
 
       <a
