@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { Model } from "objection";
 import userRoutes from "./routes/usuarios.js";
+import loginRoutes from "./routes/login.js";
 import knex from "./config/db.js";
 
 dotenv.config();
@@ -20,6 +21,7 @@ Model.knex(knex);
 
 // rutas
 app.use("/api/usuarios", userRoutes);
+app.use("/login", loginRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
