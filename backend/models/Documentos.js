@@ -10,7 +10,7 @@ class Documento extends Model {
   static get relationMappings() {
 
     return {
-      usuario: {
+      usuarioRef: {
         relation: Model.BelongsToOneRelation,
         modelClass: Usuario,
         join: {
