@@ -25,8 +25,8 @@ export default function Formulario() {
           className="w-full px-4 py-2 mt-2 border border-[var(--borde-input)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)]"
         >
           <option value="">Seleccione una opción</option>
-          <option value="opcion1">GC</option>
-          <option value="opcion2">GF</option>
+          <option value="opcion1">GF</option>
+          <option value="opcion2">GC</option>
          
         </select>
 
