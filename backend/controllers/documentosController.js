@@ -4,14 +4,16 @@ import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 
-// Configuración de Multer
+// Carpeta de almacenamiento
+const UPLOADS_DIR = path.resolve("documentos-formatos");
+
+// Configuración de Multer con validación previa
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.resolve("documentos-formatos");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     }
-    cb(null, uploadPath);
+    cb(null, UPLOADS_DIR);
   },
   filename: (req, file, cb) => {
     const uniqueName = Date.now() + "-" + file.originalname;
@@ -19,49 +21,62 @@ const storage = multer.diskStorage({
   },
 });
 
-export const upload = multer({ storage });
-
-// Subir documento (archivo1 o archivo2)
-export const subirDocumento = async (req, res) => {
+// 🚦 Validación ANTES de guardar archivo
+const fileFilter = async (req, file, cb) => {
   try {
     const { numero_doc, tipo } = req.body;
-    const archivo = req.file;
 
     if (!numero_doc) {
-      return res.status(400).json({ error: "Se requiere el número de documento del usuario" });
+      return cb(new Error("Se requiere el número de documento"), false);
     }
+
+    if (tipo !== "1" && tipo !== "2") {
+      return cb(new Error("El campo 'tipo' debe ser '1' o '2'"), false);
+    }
+
+    // Validar si existe usuario
+    const usuario = await Usuario.query().findOne({ numero_doc });
+
+    if (!usuario) {
+      return cb(new Error("Usuario no encontrado"), false);
+    }
+
+    // ✅ Guardamos el usuario en req
+    req.usuario = usuario;
+    cb(null, true);
+  } catch (error) {
+    cb(new Error("Error en la validación del archivo"), false);
+  }
+};
+
+
+export const upload = multer({ storage, fileFilter });
+
+// Subir documento
+export const subirDocumento = async (req, res) => {
+  try {
+    const { tipo } = req.body;
+    const archivo = req.file;
+    const usuario = req.usuario; // ← ya lo tenés desde el fileFilter
 
     if (!archivo) {
       return res.status(400).json({ error: "No se envió ningún archivo" });
     }
 
-    if (tipo !== "1" && tipo !== "2") {
-      return res.status(400).json({ error: "El campo 'tipo' debe ser '1' o '2'" });
-    }
-
-    // 1. Buscar usuario por número de documento
-    const usuario = await Usuario.query().findOne({ numero_doc });
-
-    if (!usuario) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-
-    // 2. Buscar si ya existe un registro en documentos para ese usuario
+    // 1. Buscar si ya existe un registro en documentos
     let documento = await Documentos.query().findOne({ usuario: usuario.id });
 
     if (!documento) {
-      // Si no existe, crear uno nuevo
       documento = await Documentos.query().insert({
-        usuario: usuario.id, // 👈 aquí usamos "usuario"
+        usuario: usuario.id,
         archivo1: tipo === "1" ? archivo.filename : null,
         archivo2: tipo === "2" ? archivo.filename : null,
         estado_id: 1,
       });
     } else {
-      // Si existe, actualizar según el tipo
       if (tipo === "1") {
         if (documento.archivo1) {
-          const oldPath = path.resolve("uploads", documento.archivo1);
+          const oldPath = path.join(UPLOADS_DIR, documento.archivo1);
           if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
         documento = await documento.$query().patchAndFetch({
@@ -69,7 +84,7 @@ export const subirDocumento = async (req, res) => {
         });
       } else if (tipo === "2") {
         if (documento.archivo2) {
-          const oldPath = path.resolve("uploads", documento.archivo2);
+          const oldPath = path.join(UPLOADS_DIR, documento.archivo2);
           if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
         documento = await documento.$query().patchAndFetch({
