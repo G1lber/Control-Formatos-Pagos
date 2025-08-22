@@ -22,7 +22,7 @@ export default function RecuperarPassword() {
     }
 
     // ✅ Simular envío de correo
-    setAlerta({ msg: "Consulta enviada al correo ✅", error: false });
+    setAlerta({ msg: "Consulta enviada al correo", error: false });
     setMostrarCodigo(true);
   };
 
@@ -33,7 +33,7 @@ export default function RecuperarPassword() {
     }
 
     // ✅ Simular verificación
-    setAlerta({ msg: "Código verificado ✅", error: false });
+    setAlerta({ msg: "Código verificado", error: false });
 
     setTimeout(() => {
       navigate("/nueva-password", { state: { email: correo } });
@@ -84,7 +84,7 @@ export default function RecuperarPassword() {
                 </label>
                 <input
                   type="email"
-                  placeholder="usuario@correo.com"
+                  placeholder="usuario@gmail.com.com"
                   value={correo}
                   onChange={(e) => setCorreo(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39A900]"
