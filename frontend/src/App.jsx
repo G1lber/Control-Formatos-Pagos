@@ -7,6 +7,7 @@ import NuevaPassword from "./pages/NuevaPassword";
 import Menu from "./pages/Menu";
 import Users from "./pages/Users.jsx";
 import RutaProtegida from "./context/ProtectedRoute.jsx";
+import Documentos from "./pages/Documentos"
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/recuperar-password" element={<RecuperarPassword />} />
       <Route path="/nueva-password" element={<NuevaPassword />} />
-
+      <Route path="/documentos" element={<Documentos />} />
       {/* Rutas protegidas */}
       <Route 
         path="/menu" 
