@@ -1,16 +1,16 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Login from "./pages/Login";
 import Inicio from './pages/Inicio';
 import Formulario from './pages/Formulario';
 import RecuperarPassword from "./pages/RecuperarPassword";
 import NuevaPassword from "./pages/NuevaPassword";
-import Menu from "./pages/Menu"
-import Users from "./pages/Users.jsx"
-import RutaProtegida from "./context/ProtectedRoute.jsx"
+import Menu from "./pages/Menu";
+import Users from "./pages/Users.jsx";
+import RutaProtegida from "./context/ProtectedRoute.jsx";
 
 function App() {
   return (
-     <Routes>
+    <Routes>
       {/* Rutas públicas */}
       <Route path="/" element={<Inicio />} />
       <Route path="/formulario" element={<Formulario />} />
@@ -19,10 +19,22 @@ function App() {
       <Route path="/nueva-password" element={<NuevaPassword />} />
 
       {/* Rutas protegidas */}
-      <Route element={<RutaProtegida />}>
-        <Route path="/menu" element={<Menu />} />
-        <Route path="/usuarios" element={<Users />} />
-      </Route>
+      <Route 
+        path="/menu" 
+        element={
+          <RutaProtegida>
+            <Menu />
+          </RutaProtegida>
+        } 
+      />
+      <Route 
+        path="/usuarios" 
+        element={
+          <RutaProtegida>
+            <Users />
+          </RutaProtegida>
+        } 
+      />
     </Routes>
   );
 }

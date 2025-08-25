@@ -1,10 +1,15 @@
 import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [numDoc, setNumDoc] = useState("");
+  const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,10 +20,7 @@ export default function Login() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          correo: numDoc,     // 👈 este debe coincidir con lo que pide tu backend
-          password: password, // 👈 el backend pide "password"
-        }),
+        body: JSON.stringify({ correo, password }),
       });
 
       const data = await res.json();
@@ -27,9 +29,12 @@ export default function Login() {
         setError(data.error || "Error al iniciar sesión");
       } else {
         console.log("✅ Login exitoso:", data);
-        // Aquí puedes guardar el usuario en localStorage o Context
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
-        window.location.href = "/menu"; // 👈 redirigir al menú
+        if (data.token) localStorage.setItem("token", data.token);
+        if (data.usuario) {
+          localStorage.setItem("usuario", JSON.stringify(data.usuario));
+          login(data.usuario);
+        }
+        navigate("/menu");
       }
     } catch (err) {
       console.error(err);
@@ -38,7 +43,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] flex items-center justify-center relative px-4">
       <a
@@ -64,8 +68,8 @@ export default function Login() {
           <input
             type="text"
             placeholder="Correo"
-            value={numDoc}
-            onChange={(e) => setNumDoc(e.target.value)}
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
             required
             className="w-full px-4 py-2 border border-[var(--borde-input)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)]"
           />
@@ -79,6 +83,7 @@ export default function Login() {
             className="w-full px-4 py-2 border border-[var(--borde-input)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)]"
           />
 
+          {/* 👇 Mostrar error del backend */}
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
