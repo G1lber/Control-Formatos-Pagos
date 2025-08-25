@@ -1,15 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function Login() {
-  const handleSubmit = (e) => {
+  const [numDoc, setNumDoc] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Formulario enviado");
-    // Aquí luego conectarías con el backend
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          correo: numDoc,     // 👈 este debe coincidir con lo que pide tu backend
+          password: password, // 👈 el backend pide "password"
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error al iniciar sesión");
+      } else {
+        console.log("✅ Login exitoso:", data);
+        // Aquí puedes guardar el usuario en localStorage o Context
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        window.location.href = "/menu"; // 👈 redirigir al menú
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Error de conexión con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] flex items-center justify-center relative px-4">
-      {/* Botón Volver */}
       <a
         href="/"
         className="absolute top-4 right-4 bg-[var(--color-principal)] text-[var(--color-blanco)] px-4 py-2 rounded-md text-sm hover:bg-[var(--color-hover)] transition"
@@ -17,14 +48,12 @@ export default function Login() {
         Volver
       </a>
 
-      <div className=" bg-[var(--color-blanco)] p-[40px] px-[30px] rounded-2xl shadow-[0_15px_40px_var(--color-sombra)] w-full max-w-[400px] box-border animate-fadeIn text-center">
-        {/* Logo superior */}
+      <div className="bg-[var(--color-blanco)] p-[40px] px-[30px] rounded-2xl shadow-[0_15px_40px_var(--color-sombra)] w-full max-w-[400px] box-border animate-fadeIn text-center">
         <div className="mb-4 flex justify-center space-y-2">
           <img src="/img/sena-logo.png" alt="Logo SENA" className="h-15" />
         </div>
 
-        {/* Título y subtítulo */}
-        <h2 className="text-2xl font-bold space-y-2 text-[var(--color-principal)]">
+        <h2 className="text-2xl font-bold text-[var(--color-principal)]">
           Iniciar Sesión
         </h2>
         <p className="mt-5 text-[var(--color-texto)] text-sm mb-6">
@@ -32,45 +61,42 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Número de documento */}
           <input
             type="text"
-            id="num_doc"
-            name="num_doc"
-            placeholder="Número de documento"
+            placeholder="Correo"
+            value={numDoc}
+            onChange={(e) => setNumDoc(e.target.value)}
             required
             className="w-full px-4 py-2 border border-[var(--borde-input)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)]"
           />
 
-          {/* Contraseña */}
           <input
             type="password"
-            id="password"
-            name="password"
             placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             className="w-full px-4 py-2 border border-[var(--borde-input)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)]"
           />
 
-          {/* Botón */}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-[var(--color-principal)] text-[var(--color-blanco)] py-3 rounded-md text-lg hover:bg-[var(--color-hover)] transition"
           >
-            Entrar
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
-        {/* Enlaces adicionales */}
-        <div className="mt-6 text-sm space-y-2">
-          <p>
-            <a
-              href="/recuperar-password"
-              className="text-[var(--color-principal)] hover:underline font-medium"
-            >
-              ¿Olvidaste tu contraseña?
-            </a>
-          </p>
+        <div className="mt-6 text-sm">
+          <a
+            href="/recuperar-password"
+            className="text-[var(--color-principal)] hover:underline font-medium"
+          >
+            ¿Olvidaste tu contraseña?
+          </a>
         </div>
       </div>
     </div>

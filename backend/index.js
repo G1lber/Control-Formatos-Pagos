@@ -23,7 +23,7 @@ Model.knex(knex);
 
 // rutas
 app.use("/api/usuarios", userRoutes);
-app.use("/login", loginRoutes);
+app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
 
 
