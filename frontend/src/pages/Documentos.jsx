@@ -9,19 +9,22 @@ export default function Documentos() {
   const notificaciones = [
     {
       usuario: "Juan Pérez",
-      archivo: "documento.pdf",
+      archivo1: "documento.pdf",
+      archivo2: "documento.pdf",
       fecha: "12/08/2025 - 10:35 AM",
       estado: "Pendiente",
     },
     {
       usuario: "María López",
-      archivo: "contrato.docx",
+      archivo1: "contrato.docx",
+      archivo2: "contrato.docx",
       fecha: "12/08/2025 - 09:12 AM",
       estado: "Revisado",
     },
     {
       usuario: "Carlos Gómez",
-      archivo: "foto.png",
+      archivo1: "",
+      archivo2: "",
       fecha: "11/08/2025 - 04:50 PM",
       estado: "Sin archivo",
     },
@@ -114,7 +117,8 @@ export default function Documentos() {
             <thead>
               <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
                 <th className="p-3">Usuario</th>
-                <th className="p-3">Archivo</th>
+                <th className="p-3">Archivo GF</th>
+                <th className="p-3">Archivo GC</th>
                 <th className="p-3">Fecha</th>
                 <th className="p-3">Estado</th>
                 <th className="p-3">Acciones</th>
@@ -127,7 +131,8 @@ export default function Documentos() {
                   className="border-b last:border-none hover:bg-gray-50 text-sm"
                 >
                   <td className="p-3">{n.usuario}</td>
-                  <td className="p-3">{n.archivo}</td>
+                  <td className="p-3">{n.archivo1}</td>
+                  <td className="p-3">{n.archivo2}</td>
                   <td className="p-3">{n.fecha.split(" - ")[0]}</td>
                   <td className="p-3">{n.estado}</td>
                   <td className="p-3">
