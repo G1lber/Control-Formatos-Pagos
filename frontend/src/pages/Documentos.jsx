@@ -39,14 +39,14 @@ export default function Documentos() {
       {/* Botón Volver */}
       <Link
         to="/menu"
-        className="fixed top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 
-                    bg-[var(--color-principal)] text-white px-3 py-2 md:px-4 md:py-2 
-                    rounded-lg shadow-lg hover:bg-[var(--color-hover)] transition 
-                    text-sm md:text-base"
+        className="absolute top-6 right-6 flex items-center gap-1 bg-[var(--color-principal)] 
+                    text-white px-2 py-1 rounded-md shadow-md hover:bg-[var(--color-hover)] 
+                    transition text-sm"
         >
-        <ArrowLeft size={18} />
+        <ArrowLeft size={14} />
         Volver
       </Link>
+
 
       {/* Card de Notificaciones */}
       <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6 w-full lg:w-1/3">
