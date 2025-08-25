@@ -98,7 +98,7 @@ export default function Documentos() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-100 text-left text-sm">
+              <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
                 <th className="p-3">Usuario</th>
                 <th className="p-3">Archivo</th>
                 <th className="p-3">Fecha</th>
