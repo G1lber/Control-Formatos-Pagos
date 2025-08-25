@@ -1,5 +1,7 @@
 // src/pages/Documentos.jsx
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendientes");
@@ -30,7 +32,19 @@ export default function Documentos() {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--color-fondo)] p-6 flex flex-col lg:flex-row gap-6">
+    <div className="min-h-screen bg-[var(--color-fondo)] p-6 flex flex-col lg:flex-row gap-6 relative">
+      {/* Botón Volver */}
+      <Link
+        to="/menu"
+        className="fixed top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 
+                    bg-[var(--color-principal)] text-white px-3 py-2 md:px-4 md:py-2 
+                    rounded-lg shadow-lg hover:bg-[var(--color-hover)] transition 
+                    text-sm md:text-base"
+        >
+        <ArrowLeft size={18} />
+        Volver
+      </Link>
+
       {/* Card de Notificaciones */}
       <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6 w-full lg:w-1/3">
         <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
