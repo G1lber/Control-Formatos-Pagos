@@ -9,7 +9,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: "Correo y contraseña son requeridos" });
     }
 
-    //Buscar login y traer usuario + rol
+    // Buscar usuario con el correo
     const loginData = await Login.query()
       .joinRelated("usuario_rel")
       .where("usuario_rel.correo", correo)
@@ -26,15 +26,15 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
-    // Extraer rol correctamente (el campo es "nombre_rol")
+    // Extraer rol
     const rolUsuario = loginData.usuario_rel.rol?.nombre_rol;
 
-    // Verificar rol después de la contraseña
+    // Verificar si es admin
     if (rolUsuario !== "admin") {
       return res.status(403).json({ error: "Acceso denegado: no eres administrador" });
     }
 
-    //Si pasa, login exitoso
+    // Respuesta si todo está bien
     return res.status(200).json({
       message: "Login exitoso",
       usuario: {
@@ -43,6 +43,7 @@ export const login = async (req, res) => {
         correo: loginData.usuario_rel.correo,
         rol: rolUsuario,
       },
+      token: "fake-jwt-token" // 👈 luego lo reemplazamos con JWT real
     });
 
   } catch (error) {
