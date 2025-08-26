@@ -52,7 +52,7 @@ const fileFilter = async (req, file, cb) => {
 
 export const upload = multer({ storage, fileFilter });
 
-// Subir documento
+// Subir documento en el formulario 
 export const subirDocumento = async (req, res) => {
   try {
     const { tipo } = req.body;

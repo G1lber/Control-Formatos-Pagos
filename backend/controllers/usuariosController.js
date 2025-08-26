@@ -72,18 +72,22 @@ const updateUsuario = async (req, res) => {
     const rolAnterior = await Rol.query().findById(usuario.rol_id);
     const rolNuevo = await Rol.query().findById(rol_id);
 
-    // Actualizar datos básicos
-    await Usuario.query().patchAndFetchById(req.params.id, {
+    // Actualizar datos básicos (nombre, doc, correo, rol)
+    const usuarioActualizado = await Usuario.query().patchAndFetchById(req.params.id, {
       nombre,
       numero_doc,
       correo,
       rol_id,
     });
 
+    // --- Manejo de credenciales según cambios de rol ---
+
     // Si pasa de usuario → admin
     if (rolAnterior.nombre_rol !== "admin" && rolNuevo.nombre_rol === "admin") {
       if (!password) {
-        return res.status(400).json({ error: "Debe asignar contraseña al cambiar a admin" });
+        return res
+          .status(400)
+          .json({ error: "Debe asignar contraseña al cambiar a admin" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -93,10 +97,14 @@ const updateUsuario = async (req, res) => {
       });
     }
 
-    // Si sigue siendo admin y cambia contraseña
-    if (rolAnterior.nombre_rol === "admin" && rolNuevo.nombre_rol === "admin" && password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await Login.query().patch({ password: hashedPassword }).where("usuario", usuario.id);
+    // Si sigue siendo admin y envió nueva contraseña
+    if (rolAnterior.nombre_rol === "admin" && rolNuevo.nombre_rol === "admin") {
+      if (password && password.trim() !== "") {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await Login.query()
+          .patch({ password: hashedPassword })
+          .where("usuario", usuario.id);
+      }
     }
 
     // Si pasa de admin → usuario
@@ -104,11 +112,16 @@ const updateUsuario = async (req, res) => {
       await Login.query().delete().where("usuario", usuario.id);
     }
 
-    res.json({ message: "Usuario actualizado correctamente" });
+    res.json({
+      message: "Usuario actualizado correctamente",
+      usuario: usuarioActualizado,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error actualizando usuario:", error);
+    res.status(500).json({ error: "Error al actualizar usuario" });
   }
 };
+
 
 // Eliminar usuario
 const deleteUsuario = async (req, res) => {

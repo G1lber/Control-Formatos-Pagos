@@ -15,8 +15,8 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
       setNombre(usuario.nombre || "");
       setNumeroDoc(usuario.numero_doc || "");
       setCorreo(usuario.correo || "");
-      setRolId(usuario.rol_id || "");
-      setPassword("");
+      setRolId(usuario.rol_id?.toString() || "");
+      setPassword(""); // limpiar siempre al abrir modal
     } else {
       setNombre("");
       setNumeroDoc("");
@@ -31,7 +31,18 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = { nombre, numero_doc: numeroDoc, correo, rol_id: rolId, password };
+    // Construir data dinámicamente
+    const data = { 
+      nombre, 
+      numero_doc: numeroDoc, 
+      correo, 
+      rol_id: rolId 
+    };
+
+    // Solo enviar contraseña si la escribió
+    if (rolId === "1" && password.trim() !== "") {
+      data.password = password;
+    }
 
     try {
       if (usuario) {
@@ -103,15 +114,15 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
             <option value="2">Usuario</option>
           </select>
 
-          {/* Campo contraseña solo si es Admin o si está editando Admin */}
+          {/* Campo contraseña solo si es Admin */}
           {rolId === "1" && (
             <input
               type="password"
-              placeholder="Contraseña"
+              placeholder={usuario ? "Nueva Contraseña" : "Contraseña"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border rounded-lg px-4 py-2"
-              required={!usuario}
+              required={!usuario} // obligatorio solo si se crea
             />
           )}
 
