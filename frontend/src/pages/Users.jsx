@@ -64,7 +64,7 @@ export default function Usuarios() {
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="bg-[var(--color-principal)] text-gray-800 px-4 py-2 rounded-lg hover:bg-[var(--color-hover)] transition"
+          className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)] transition"
         >
           Volver
         </button>
