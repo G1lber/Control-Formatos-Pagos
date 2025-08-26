@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [filtro, setFiltro] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsuarios();
@@ -31,11 +33,26 @@ export default function UsuariosPage() {
 
   return (
     <div className="p-6 bg-[var(--color-fondo)] min-h-screen">
-      <h1 className="text-2xl font-bold text-[var(--color-principal)] mb-6">
-        Gestión de Usuarios
-      </h1>
+      {/* Encabezado con volver y crear */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-[var(--color-principal)] text-gray-800 px-4 py-2 rounded-lg hover:bg-[var(--color-hover)] transition"
+        >
+          Volver
+        </button>
 
-      
+        <h1 className="text-2xl font-bold text-[var(--color-principal)]">
+          Gestión de Usuarios
+        </h1>
+
+        <button
+          onClick={() => console.log("Abrir modal crear usuario")}
+          className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)] transition"
+        >
+          + Crear Usuario
+        </button>
+      </div>
 
       {/* Buscador */}
       <div className="flex items-center gap-2 mb-6">
@@ -47,7 +64,7 @@ export default function UsuariosPage() {
           className="flex-1 border px-4 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none"
         />
         <button
-          onClick={() => console.log("Buscar:", busqueda)} // Aquí pones tu lógica de búsqueda
+          onClick={() => console.log("Buscar:", busqueda)}
           className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)] transition"
         >
           Buscar
@@ -86,6 +103,14 @@ export default function UsuariosPage() {
                 </td>
               </tr>
             ))}
+
+            {filtrados.length === 0 && (
+              <tr>
+                <td colSpan="5" className="text-center py-6 text-gray-500">
+                  No se encontraron usuarios
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
