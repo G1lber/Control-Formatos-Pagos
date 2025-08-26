@@ -1,39 +1,66 @@
+// src/pages/Usuarios.jsx
 import { useState, useEffect } from "react";
-import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import UsuarioModal from "../components/ModalUsuario";
 
-export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState([]);
-  const [filtro, setFiltro] = useState("Todos");
-  const [busqueda, setBusqueda] = useState("");
+const API_URL = import.meta.env.VITE_API_URL;
+
+export default function Usuarios() {
   const navigate = useNavigate();
+  const [usuarios, setUsuarios] = useState([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [usuarioEdit, setUsuarioEdit] = useState(null);
+
+  // Cargar usuarios
+  const fetchUsuarios = async () => {
+    try {
+      const res = await fetch(`${API_URL}/usuarios`);
+      const data = await res.json();
+      setUsuarios(data);
+    } catch (error) {
+      console.error("Error cargando usuarios:", error);
+    }
+  };
 
   useEffect(() => {
     fetchUsuarios();
   }, []);
 
-  const fetchUsuarios = async () => {
+  // Abrir modal para crear
+  const handleCrear = () => {
+    setUsuarioEdit(null);
+    setModalOpen(true);
+  };
+
+  // Abrir modal para editar
+  const handleEditar = (usuario) => {
+    setUsuarioEdit(usuario);
+    setModalOpen(true);
+  };
+
+  // Eliminar usuario
+  const handleEliminar = async (id) => {
+    if (!confirm("¿Seguro que deseas eliminar este usuario?")) return;
+
     try {
-      const res = await api.get("/usuarios");
-      setUsuarios(res.data);
+      await fetch(`${API_URL}/usuarios/${id}`, { method: "DELETE" });
+      fetchUsuarios();
     } catch (error) {
-      console.error("Error al obtener usuarios:", error);
+      console.error("Error eliminando usuario:", error);
     }
   };
 
-  // Filtrado por estado o búsqueda
-  const filtrados = usuarios.filter((u) => {
-    const matchesFiltro =
-      filtro === "Todos" ? true : u.estado === filtro;
-    const matchesBusqueda =
+  // Filtrar usuarios
+  const usuariosFiltrados = usuarios.filter(
+    (u) =>
       u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      u.numero_doc.toLowerCase().includes(busqueda.toLowerCase());
-    return matchesFiltro && matchesBusqueda;
-  });
+      u.numero_doc.toString().includes(busqueda)
+  );
 
   return (
     <div className="p-6 bg-[var(--color-fondo)] min-h-screen">
-      {/* Encabezado con volver y crear */}
+      {/* Encabezado */}
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -47,7 +74,7 @@ export default function UsuariosPage() {
         </h1>
 
         <button
-          onClick={() => console.log("Abrir modal crear usuario")}
+          onClick={handleCrear}
           className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)] transition"
         >
           + Crear Usuario
@@ -71,7 +98,7 @@ export default function UsuariosPage() {
         </button>
       </div>
 
-      {/* Tabla de usuarios */}
+      {/* Tabla */}
       <div className="overflow-x-auto bg-[var(--color-blanco)] shadow-md rounded-2xl p-6">
         <table className="w-full border-collapse">
           <thead>
@@ -84,27 +111,35 @@ export default function UsuariosPage() {
             </tr>
           </thead>
           <tbody>
-            {filtrados.map((u, idx) => (
-              <tr
-                key={idx}
-                className="border-b last:border-none hover:bg-gray-50 text-sm"
-              >
-                <td className="p-3">{u.nombre}</td>
-                <td className="p-3">{u.numero_doc}</td>
-                <td className="p-3">{u.rol?.nombre_rol}</td>
-                <td className="p-3">{u.correo}</td>
-                <td className="p-3 flex gap-2">
-                  <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs">
-                    Editar
-                  </button>
-                  <button className="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded-lg text-xs">
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {filtrados.length === 0 && (
+            {usuariosFiltrados.length > 0 ? (
+              usuariosFiltrados.map((u) => (
+                <tr
+                  key={u.id}
+                  className="border-b last:border-none hover:bg-gray-50 text-sm"
+                >
+                  <td className="p-3">{u.nombre}</td>
+                  <td className="p-3">{u.numero_doc}</td>
+                  <td className="p-3">
+                    {u.rol_id === 1 ? "Admin" : "Usuario"}
+                  </td>
+                  <td className="p-3">{u.correo}</td>
+                  <td className="p-3 flex gap-2">
+                    <button
+                      onClick={() => handleEditar(u)}
+                      className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleEliminar(u.id)}
+                      className="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded-lg text-xs"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <td colSpan="5" className="text-center py-6 text-gray-500">
                   No se encontraron usuarios
@@ -114,6 +149,14 @@ export default function UsuariosPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal (Crear/Editar) */}
+      <UsuarioModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={fetchUsuarios}
+        usuario={usuarioEdit}
+      />
     </div>
   );
 }
