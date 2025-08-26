@@ -71,7 +71,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6">
-        <h2 className="text-xl font-bold mb-4 text-[var(--color-secundario)]">
+        <h2 className="text-xl text-center font-bold mb-4 text-[var(--color-principal)]">
           {usuario ? "Editar Usuario" : "Crear Usuario"}
         </h2>
 

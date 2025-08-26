@@ -1,11 +1,11 @@
-// src/pages/Documentos.jsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import * as Accordion from "@radix-ui/react-accordion";
+import CardDesplegable from "../components/CardDesplegable"; // ⬅️ Importa tu componente
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendientes");
-
   const [fechaGF, setFechaGF] = useState("");
   const [fechaGC, setFechaGC] = useState("");
 
@@ -54,74 +54,63 @@ export default function Documentos() {
         Volver
       </Link>
 
-      {/* Columna izquierda */}
-      <div className="flex flex-col gap-6 w-full lg:w-1/3">
-        {/* Card de Notificaciones */}
-        <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
-            Notificaciones
-          </h2>
-          <div className="space-y-4">
-            {notificaciones.map((n, idx) => (
-              <div
-                key={idx}
-                className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
-              >
-                <div>
-                  <p className="text-sm">
-                    <strong>{n.usuario}</strong> subió{" "}
-                    <em>{n.archivo1 || "Sin archivo"}</em>
-                  </p>
-                  <small className="text-xs text-gray-500">{n.fecha}</small>
-                </div>
-                <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
-                  Revisar
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Card de Ajuste de Fechas */}
-        <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
-            Ajuste de Fechas
-          </h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fecha límite GF
-              </label>
-              <input
-                type="date"
-                value={fechaGF}
-                onChange={(e) => setFechaGF(e.target.value)}
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fecha límite GC
-              </label>
-              <input
-                type="date"
-                value={fechaGC}
-                onChange={(e) => setFechaGC(e.target.value)}
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-              />
-            </div>
-
-            <button
-              onClick={handleActivar}
-              className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+      {/* Columna izquierda con Accordion */}
+      <Accordion.Root type="multiple" className="flex flex-col gap-6 w-full lg:w-1/3">
+        {/* Notificaciones */}
+        <CardDesplegable value="notificaciones" title="Notificaciones">
+          {notificaciones.map((n, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
             >
-              Activar
-            </button>
+              <div>
+                <p className="text-sm">
+                  <strong>{n.usuario}</strong> subió{" "}
+                  <em>{n.archivo1 || "Sin archivo"}</em>
+                </p>
+                <small className="text-xs text-gray-500">{n.fecha}</small>
+              </div>
+              <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
+                Revisar
+              </button>
+            </div>
+          ))}
+        </CardDesplegable>
+
+        {/* Ajuste de Fechas */}
+        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GF
+            </label>
+            <input
+              type="date"
+              value={fechaGF}
+              onChange={(e) => setFechaGF(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
           </div>
-        </div>
-      </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GC
+            </label>
+            <input
+              type="date"
+              value={fechaGC}
+              onChange={(e) => setFechaGC(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
+
+          <button
+            onClick={handleActivar}
+            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+          >
+            Activar
+          </button>
+        </CardDesplegable>
+      </Accordion.Root>
 
       {/* Tabla de revisión */}
       <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6 w-full lg:flex-1">
