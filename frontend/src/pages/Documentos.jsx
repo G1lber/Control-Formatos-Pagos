@@ -1,25 +1,33 @@
 // src/pages/Documentos.jsx
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendientes");
 
+  const [fechaGF, setFechaGF] = useState("");
+  const [fechaGC, setFechaGC] = useState("");
+
   const notificaciones = [
     {
       usuario: "Juan Pérez",
-      archivo: "documento.pdf",
+      archivo1: "documento.pdf",
+      archivo2: "documento.pdf",
       fecha: "12/08/2025 - 10:35 AM",
       estado: "Pendiente",
     },
     {
       usuario: "María López",
-      archivo: "contrato.docx",
+      archivo1: "contrato.docx",
+      archivo2: "contrato.docx",
       fecha: "12/08/2025 - 09:12 AM",
       estado: "Revisado",
     },
     {
       usuario: "Carlos Gómez",
-      archivo: "foto.png",
+      archivo1: "",
+      archivo2: "",
       fecha: "11/08/2025 - 04:50 PM",
       estado: "Sin archivo",
     },
@@ -29,30 +37,89 @@ export default function Documentos() {
     (n) => n.estado === filtro || filtro === "Todos"
   );
 
+  const handleActivar = () => {
+    alert(`Fechas activadas:\nGF: ${fechaGF || "No definida"}\nGC: ${fechaGC || "No definida"}`);
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--color-fondo)] p-6 flex flex-col lg:flex-row gap-6">
-      {/* Card de Notificaciones */}
-      <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6 w-full lg:w-1/3">
-        <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
-          Notificaciones
-        </h2>
-        <div className="space-y-4">
-          {notificaciones.map((n, idx) => (
-            <div
-              key={idx}
-              className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
-            >
-              <div>
-                <p className="text-sm">
-                  <strong>{n.usuario}</strong> subió <em>{n.archivo}</em>
-                </p>
-                <small className="text-xs text-gray-500">{n.fecha}</small>
+    <div className="min-h-screen bg-[var(--color-fondo)] p-6 flex flex-col lg:flex-row gap-6 relative">
+      {/* Botón Volver */}
+      <Link
+        to="/menu"
+        className="absolute top-6 right-6 flex items-center gap-1 bg-[var(--color-principal)] 
+                    text-white px-2 py-1 rounded-md shadow-md hover:bg-[var(--color-hover)] 
+                    transition text-sm"
+      >
+        <ArrowLeft size={14} />
+        Volver
+      </Link>
+
+      {/* Columna izquierda */}
+      <div className="flex flex-col gap-6 w-full lg:w-1/3">
+        {/* Card de Notificaciones */}
+        <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
+            Notificaciones
+          </h2>
+          <div className="space-y-4">
+            {notificaciones.map((n, idx) => (
+              <div
+                key={idx}
+                className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
+              >
+                <div>
+                  <p className="text-sm">
+                    <strong>{n.usuario}</strong> subió{" "}
+                    <em>{n.archivo1 || "Sin archivo"}</em>
+                  </p>
+                  <small className="text-xs text-gray-500">{n.fecha}</small>
+                </div>
+                <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
+                  Revisar
+                </button>
               </div>
-              <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
-                Revisar
-              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Card de Ajuste de Fechas */}
+        <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
+            Ajuste de Fechas
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha límite GF
+              </label>
+              <input
+                type="date"
+                value={fechaGF}
+                onChange={(e) => setFechaGF(e.target.value)}
+                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+              />
             </div>
-          ))}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha límite GC
+              </label>
+              <input
+                type="date"
+                value={fechaGC}
+                onChange={(e) => setFechaGC(e.target.value)}
+                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+              />
+            </div>
+
+            <button
+              onClick={handleActivar}
+              className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+            >
+              Activar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -100,7 +167,8 @@ export default function Documentos() {
             <thead>
               <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
                 <th className="p-3">Usuario</th>
-                <th className="p-3">Archivo</th>
+                <th className="p-3">Archivo GF</th>
+                <th className="p-3">Archivo GC</th>
                 <th className="p-3">Fecha</th>
                 <th className="p-3">Estado</th>
                 <th className="p-3">Acciones</th>
@@ -113,7 +181,8 @@ export default function Documentos() {
                   className="border-b last:border-none hover:bg-gray-50 text-sm"
                 >
                   <td className="p-3">{n.usuario}</td>
-                  <td className="p-3">{n.archivo}</td>
+                  <td className="p-3">{n.archivo1 || "—"}</td>
+                  <td className="p-3">{n.archivo2 || "—"}</td>
                   <td className="p-3">{n.fecha.split(" - ")[0]}</td>
                   <td className="p-3">{n.estado}</td>
                   <td className="p-3">
