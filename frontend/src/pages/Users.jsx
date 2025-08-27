@@ -123,8 +123,8 @@ export default function Usuarios() {
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           u.rol_id === 1
-                            ? "bg-green-100 text-green-700"
-                            : "bg-blue-100 text-blue-700"
+                            ? "bg-green-100 text-[var(--color-principal)]"
+                            : "bg-blue-100 text-[var(--color-secundario)]"
                         }`}
                       >
                         {u.rol_id === 1 ? "Admin" : "Usuario"}
