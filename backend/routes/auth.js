@@ -2,71 +2,74 @@ import express from "express";
 import bcrypt from "bcrypt";
 import Login from "../models/Login.js";
 import Usuario from "../models/Usuario.js";
-import Rol from "../models/Rol.js";
 import ResetCode from "../models/ResetCode.js"; // si usas tabla
 import nodemailer from "nodemailer";
+import transporter from "../config/mailer.js";
 
 const router = express.Router();
 
-//  Config de correo
-const transporter = nodemailer.createTransport({
-  service: "gmail", // o tu SMTP
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Enviar código
+// 1) Enviar código a correo
 router.post("/forgot-password", async (req, res) => {
-  const { numero_doc } = req.body; // <--- en vez de correo
+  const { correo } = req.body;
+  if (!correo) return res.status(400).json({ error: "El correo es obligatorio" });
 
   try {
+    // buscar usuario por correo y que sea admin si lo necesitas
     const usuario = await Usuario.query()
-      .joinRelated("[login, rol]")
-      .where("login.numero_doc", numero_doc)  // <--- corregido
-      .andWhere("rol.nombre", "admin")
+      .withGraphFetched("[rol, login]")
+      .where("correo", correo)
       .first();
-
-    if (!usuario) {
-      return res.status(404).json({ error: "Documento no válido o no es admin" });
+    
+    if (!usuario) return res.status(404).json({ error: "Correo no registrado" });
+    if (usuario.rol && usuario.rol.nombre_rol !== "admin") {
+    return res.status(403).json({ error: "Solo los admin pueden recuperar contraseña" });
     }
 
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // elimina códigos previos (opcional) y guarda uno nuevo (10 min)
+    await ResetCode.query().delete().where("usuario_id", usuario.id);
     await ResetCode.query().insert({
-      numero_doc, // <--- cambiar columna
+      usuario_id: usuario.id,
       codigo,
-      expiracion: new Date(Date.now() + 10 * 60000),
+      expires_at: new Date(Date.now() + 10 * 60 * 1000),
     });
 
+    // envía correo
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: usuario.login.correo ?? "tu@correo.com", // si no tienes correo, toca ver cómo se envía
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: usuario.correo,                      // <<<<<< AQUÍ se usa el correo de la tabla usuarios
       subject: "Código de recuperación",
-      text: `Tu código de verificación es: ${codigo}`,
+      html: `
+        <p>Hola ${usuario.nombre || ""},</p>
+        <p>Tu código de verificación es: <b style="font-size:18px">${codigo}</b></p>
+        <p>Expira en 10 minutos.</p>
+      `,
     });
 
-    return res.json({ mensaje: "Código enviado" });
+    return res.json({ mensaje: "Código enviado al correo" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Error en el servidor" });
   }
 });
-// Verificar código
+
+// 2) Verificar código (correo → usuario_id)
 router.post("/verify-code", async (req, res) => {
   const { correo, codigo } = req.body;
+  if (!correo || !codigo) return res.status(400).json({ error: "Datos incompletos" });
 
   try {
+    const usuario = await Usuario.query().where("correo", correo).first();
+    if (!usuario) return res.status(404).json({ error: "Correo no registrado" });
+
     const registro = await ResetCode.query()
-      .where("correo", correo)
+      .where("usuario_id", usuario.id)
       .andWhere("codigo", codigo)
-      .andWhere("expiracion", ">", new Date())
+      .andWhere("expires_at", ">", new Date())
       .first();
 
-    if (!registro) {
-      return res.status(400).json({ error: "Código inválido o expirado" });
-    }
+    if (!registro) return res.status(400).json({ error: "Código inválido o expirado" });
 
     return res.json({ mensaje: "Código válido" });
   } catch (err) {
@@ -75,28 +78,30 @@ router.post("/verify-code", async (req, res) => {
   }
 });
 
-// Cambiar contraseña
+// 3) Cambiar contraseña (correo + código)
 router.post("/reset-password", async (req, res) => {
   const { correo, codigo, nuevaPassword } = req.body;
+  if (!correo || !codigo || !nuevaPassword)
+    return res.status(400).json({ error: "Datos incompletos" });
 
   try {
+    const usuario = await Usuario.query().where("correo", correo).first();
+    if (!usuario) return res.status(404).json({ error: "Correo no registrado" });
+
     const registro = await ResetCode.query()
-      .where("correo", correo)
+      .where("usuario_id", usuario.id)
       .andWhere("codigo", codigo)
-      .andWhere("expiracion", ">", new Date())
+      .andWhere("expires_at", ">", new Date())
       .first();
 
-    if (!registro) {
-      return res.status(400).json({ error: "Código inválido o expirado" });
-    }
+    if (!registro) return res.status(400).json({ error: "Código inválido o expirado" });
 
     const hash = await bcrypt.hash(nuevaPassword, 10);
 
     await Login.query()
-      .patch({ contrasena: hash })
-      .where("correo", correo);
+      .patch({ password: hash })             // tu columna es "password"
+      .where("usuario", usuario.id);         // FK a usuarios.id
 
-    // Eliminar código
     await ResetCode.query().deleteById(registro.id);
 
     return res.json({ mensaje: "Contraseña cambiada con éxito" });
