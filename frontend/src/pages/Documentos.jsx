@@ -6,16 +6,17 @@ import CardDesplegable from "../components/CardDesplegable";
 import api from "../services/api"; // ✅ usamos el cliente
 
 export default function Documentos() {
-  const [filtro, setFiltro] = useState("Pendientes");
+  const [filtro, setFiltro] = useState("Pendiente");
   const [fechaGF, setFechaGF] = useState("");
   const [fechaGC, setFechaGC] = useState("");
   const [documentos, setDocumentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [menuAbierto, setMenuAbierto] = useState(null); // 👈 controlamos el desplegable
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const res = await api.get("/documentos"); // ✅ petición a tu backend
+        const res = await api.get("/documentos");
         setDocumentos(res.data);
       } catch (error) {
         console.error("Error cargando documentos:", error);
@@ -26,12 +27,13 @@ export default function Documentos() {
 
   // 🔹 Filtrado por estado y búsqueda
   const filtrados = documentos.filter((n) => {
-  const coincideEstado = filtro === "Todos" || n.estado?.nombre_estado === filtro;
-  const coincideBusqueda =
-    n.usuarioRef?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    n.documento?.toString().includes(busqueda);
+    const coincideEstado =
+      filtro === "Todos" || n.estado?.nombre_estado === filtro;
+    const coincideBusqueda =
+      n.usuarioRef?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      n.documento?.toString().includes(busqueda);
 
-  return coincideEstado && coincideBusqueda;
+    return coincideEstado && coincideBusqueda;
   });
 
   const handleActivar = () => {
@@ -167,7 +169,7 @@ export default function Documentos() {
                 <th className="p-3">Acciones</th>
               </tr>
             </thead>
-           <tbody>
+            <tbody>
               {filtrados.map((n, idx) => (
                 <tr
                   key={n.id || idx}
@@ -175,14 +177,58 @@ export default function Documentos() {
                 >
                   <td className="p-3">{n.usuarioRef?.nombre || "—"}</td>
                   <td className="p-3">{n.usuarioRef?.numero_doc || "—"}</td>
-                  <td className="p-3">{n.archivo1 || "—"}</td>
-                  <td className="p-3">{n.archivo2 || "—"}</td>
+                  <td className="p-3">{n.archivo1 ? "✔️" : "—"}</td>
+                  <td className="p-3">{n.archivo2 ? "✔️" : "—"}</td>
                   <td className="p-3">{n.fecha}</td>
                   <td className="p-3">{n.estado?.nombre_estado}</td>
                   <td className="p-3">
-                    <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs">
-                      Revisar
-                    </button>
+                    {n.archivo1 && n.archivo2 ? (
+                      <div className="flex items-center gap-2">
+                        {/* Botón principal */}
+                        <button
+                          onClick={() =>
+                            setMenuAbierto(menuAbierto === idx ? null : idx)
+                          }
+                          className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs"
+                        >
+                          Revisar
+                        </button>
+
+                        {/* Menú lateral dentro de la celda */}
+                        {menuAbierto === idx && (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => window.open(n.archivo1, "_blank")}
+                              className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
+                            >
+                              GF
+                            </button>
+                            <button
+                              onClick={() => window.open(n.archivo2, "_blank")}
+                              className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
+                            >
+                              GC
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : n.archivo1 ? (
+                      <button
+                        onClick={() => window.open(n.archivo1, "_blank")}
+                        className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
+                      >
+                        Revisar GF
+                      </button>
+                    ) : n.archivo2 ? (
+                      <button
+                        onClick={() => window.open(n.archivo2, "_blank")}
+                        className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
+                      >
+                        Revisar GC
+                      </button>
+                    ) : (
+                      <span className="text-gray-400 text-xs">Sin archivo</span>
+                    )}
                   </td>
                 </tr>
               ))}
