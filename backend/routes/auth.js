@@ -8,7 +8,7 @@ import transporter from "../config/mailer.js";
 
 const router = express.Router();
 
-// 1) Enviar código a correo
+// Enviar código a correo
 router.post("/forgot-password", async (req, res) => {
   const { correo } = req.body;
   if (!correo) return res.status(400).json({ error: "El correo es obligatorio" });
@@ -54,7 +54,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// 2) Verificar código (correo → usuario_id)
+// Verificar código (correo → usuario_id)
 router.post("/verify-code", async (req, res) => {
   const { correo, codigo } = req.body;
   if (!correo || !codigo) return res.status(400).json({ error: "Datos incompletos" });
@@ -78,7 +78,7 @@ router.post("/verify-code", async (req, res) => {
   }
 });
 
-// 3) Cambiar contraseña (correo + código)
+// Cambiar contraseña (correo + código)
 router.post("/reset-password", async (req, res) => {
   const { correo, codigo, nuevaPassword } = req.body;
   if (!correo || !codigo || !nuevaPassword)
