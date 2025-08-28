@@ -9,7 +9,8 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default function Usuarios() {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState(""); // 🔹 lo que se escribe en el input
+  const [query, setQuery] = useState("");       // 🔹 lo que se aplica al dar click en Buscar
   const [modalOpen, setModalOpen] = useState(false);
   const [usuarioEdit, setUsuarioEdit] = useState(null);
 
@@ -48,11 +49,19 @@ export default function Usuarios() {
     }
   };
 
+  // 🔹 Filtro aplicado solo cuando se presiona Buscar
   const usuariosFiltrados = usuarios.filter(
     (u) =>
-      u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      u.numero_doc.toString().includes(busqueda)
+      query === "" ||
+      u.nombre.toLowerCase().includes(query.toLowerCase()) ||
+      u.numero_doc.toString().includes(query)
   );
+
+  // 🔹 Función para activar búsqueda
+  const handleBuscar = (e) => {
+    e.preventDefault();
+    setQuery(busqueda.trim());
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center px-2 py-8">
@@ -79,7 +88,7 @@ export default function Usuarios() {
         </div>
 
         {/* Buscador */}
-        <div className="flex items-center gap-2">
+        <form onSubmit={handleBuscar} className="flex items-center gap-2">
           <div className="flex items-center flex-1 border rounded-lg overflow-hidden shadow-sm">
             <Search className="ml-3 text-gray-400" size={18} />
             <input
@@ -91,12 +100,12 @@ export default function Usuarios() {
             />
           </div>
           <button
-            onClick={() => console.log("Buscar:", busqueda)}
+            type="submit"
             className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
           >
             Buscar
           </button>
-        </div>
+        </form>
 
         {/* Tabla */}
         <div className="overflow-x-auto">
