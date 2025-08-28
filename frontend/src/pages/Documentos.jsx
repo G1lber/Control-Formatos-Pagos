@@ -49,9 +49,9 @@ export default function Documentos() {
       {/* Botón Volver */}
       <Link
         to="/menu"
-        className="absolute top-6 right-6 flex items-center gap-1 bg-[var(--color-principal)] 
-                    text-white px-2 py-1 rounded-md shadow-md hover:bg-[var(--color-hover)] 
-                    transition text-sm"
+        className="absolute top-15 right-10 transform -translate-y-1/2 flex items-center gap-1 bg-[var(--color-principal)] 
+           text-white px-2 py-1 rounded-md shadow-md hover:bg-[var(--color-hover)] 
+           transition text-sm"
       >
         <ArrowLeft size={14} />
         Volver
