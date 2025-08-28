@@ -12,6 +12,7 @@ export default function Documentos() {
   const [documentos, setDocumentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(null); // 👈 controlamos el desplegable
+  const [query, setQuery] = useState(""); // 🔹 valor que activa
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -29,12 +30,20 @@ export default function Documentos() {
   const filtrados = documentos.filter((n) => {
     const coincideEstado =
       filtro === "Todos" || n.estado?.nombre_estado === filtro;
+
     const coincideBusqueda =
-      n.usuarioRef?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      n.documento?.toString().includes(busqueda);
+      query === "" ||
+      n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
+      n.usuarioRef?.numero_doc?.toString().includes(query);
 
     return coincideEstado && coincideBusqueda;
   });
+
+  // 🔹 Manejo del submit
+  const handleBuscar = (e) => {
+    e.preventDefault();
+    setQuery(busqueda.trim()); // solo busca al dar click
+  };
 
   const handleActivar = () => {
     alert(
@@ -139,21 +148,25 @@ export default function Documentos() {
         </div>
 
         {/* Buscador */}
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex items-center gap-2 mb-6"
-        >
-          <input
-            type="text"
-            placeholder="Buscar por nombre o documento"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="flex-1 border px-4 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none"
-          />
-          <button className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)]">
-            Buscar
-          </button>
-        </form>
+
+    <form
+      onSubmit={handleBuscar}
+      className="flex items-center gap-2 mb-6"
+    >
+      <input
+        type="text"
+        placeholder="Buscar por nombre o documento"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        className="flex-1 border px-4 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none"
+      />
+      <button
+        type="submit"
+        className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)]"
+      >
+        Buscar
+      </button>
+    </form>
 
         {/* Tabla */}
         <div className="overflow-x-auto">
