@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function NuevaPassword() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const correo = location.state?.email;
+  const codigo = location.state?.codigo;
+
   const [password, setPassword] = useState("");
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [alerta, setAlerta] = useState({ msg: "", error: false });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (password === "" || confirmarPassword === "") {
@@ -20,26 +25,28 @@ export default function NuevaPassword() {
       return;
     }
 
-    // ✅ Contraseña cambiada
-    setAlerta({ msg: "Contraseña cambiada con éxito", error: false });
+    try {
+      const resp = await fetch("http://localhost:3000/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          correo,
+          codigo,
+          nuevaPassword: password,
+        }),
+      });
 
-    // Simular guardar y redirigir
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
-  };
+      const data = await resp.json();
 
-  // 🔥 Este efecto hace que las alertas desaparezcan en 3s
-  useEffect(() => {
-    if (alerta.msg !== "") {
-      const timer = setTimeout(() => {
-        setAlerta({ msg: "", error: false });
-      }, 3000);
+      if (!resp.ok) throw new Error(data.error || "Error al cambiar contraseña");
 
-      return () => clearTimeout(timer); // cleanup
+      setAlerta({ msg: data.mensaje, error: false });
+
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (err) {
+      setAlerta({ msg: err.message, error: true });
     }
-  }, [alerta]);
-
+  };
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md ]">

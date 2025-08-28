@@ -5,6 +5,7 @@ import { Model } from "objection";
 import userRoutes from "./routes/usuarios.js";
 import loginRoutes from "./routes/login.js";
 import documentosRoutes from "./routes/documentos.js"
+import authRoutes from "./routes/auth.js";
 
 import knex from "./config/db.js";
 
@@ -25,6 +26,10 @@ Model.knex(knex);
 app.use("/api/usuarios", userRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
+
+// nueva ruta para olvidé contraseña
+app.use("/auth", authRoutes);
+
 
 
 const PORT = process.env.PORT || 4000;

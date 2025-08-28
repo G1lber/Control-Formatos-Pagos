@@ -8,45 +8,57 @@ export default function RecuperarPassword() {
   const [mostrarCodigo, setMostrarCodigo] = useState(false);
   const [alerta, setAlerta] = useState({ msg: "", error: false });
 
-  const handleRecuperar = () => {
-    if (!correo) {
-      setAlerta({ msg: "El correo es obligatorio", error: true });
-      return;
-    }
+const handleRecuperar = async () => {
+  if (!correo) {
+    setAlerta({ msg: "El correo es obligatorio", error: true });
+    return;
+  }
 
-    // Validar que sea correo real
-    const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regexCorreo.test(correo)) {
-      setAlerta({ msg: "Ingresa un correo válido", error: true });
-      return;
-    }
+  try {
+    const resp = await fetch("http://localhost:3000/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo }),
+    });
 
-    // ✅ Simular envío de correo
-    setAlerta({ msg: "Consulta enviada al correo", error: false });
+    const data = await resp.json();
+
+    if (!resp.ok) throw new Error(data.error || "Error al enviar código");
+
+    setAlerta({ msg: data.mensaje, error: false });
     setMostrarCodigo(true);
-  };
+  } catch (err) {
+    setAlerta({ msg: err.message, error: true });
+  }
+};
 
-  const handleVerificar = () => {
-    if (!codigo) {
-      setAlerta({ msg: "Debes ingresar el código de verificación", error: true });
-      return;
-    }
+const handleVerificar = async () => {
+  if (!codigo) {
+    setAlerta({ msg: "Debes ingresar el código", error: true });
+    return;
+  }
 
-    // ✅ Simular verificación
-    setAlerta({ msg: "Código verificado", error: false });
+  try {
+    const resp = await fetch("http://localhost:3000/auth/verify-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo, codigo }),
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) throw new Error(data.error || "Código inválido");
+
+    setAlerta({ msg: "Código verificado ✅", error: false });
 
     setTimeout(() => {
-      navigate("/nueva-password", { state: { email: correo } });
-    }, 2000);
-  };
+      navigate("/nueva-password", { state: { email: correo, codigo } });
+    }, 1500);
+  } catch (err) {
+    setAlerta({ msg: err.message, error: true });
+  }
+};
 
-  // 🔥 Alertas desaparecen automáticamente en 3 segundos
-  useEffect(() => {
-    if (alerta.msg !== "") {
-      const timer = setTimeout(() => setAlerta({ msg: "", error: false }), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alerta]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
