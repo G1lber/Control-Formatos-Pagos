@@ -182,54 +182,52 @@ export default function Documentos() {
                   <td className="p-3">{n.fecha}</td>
                   <td className="p-3">{n.estado?.nombre_estado}</td>
                   <td className="p-3">
-                    {n.archivo1 && n.archivo2 ? (
-                      <div className="flex items-center gap-2">
-                        {/* Botón principal */}
-                        <button
-                          onClick={() =>
-                            setMenuAbierto(menuAbierto === idx ? null : idx)
-                          }
-                          className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs"
-                        >
-                          Revisar
-                        </button>
+  {n.archivo1 && n.archivo2 ? (
+    <div className="flex items-center gap-2">
+      {/* Botón principal */}
+      <button
+        onClick={() => setMenuAbierto(menuAbierto === idx ? null : idx)}
+        className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs"
+      >
+        Revisar
+      </button>
 
-                        {/* Menú lateral dentro de la celda */}
-                        {menuAbierto === idx && (
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => window.open(n.archivo1, "_blank")}
-                              className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
-                            >
-                              GF
-                            </button>
-                            <button
-                              onClick={() => window.open(n.archivo2, "_blank")}
-                              className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
-                            >
-                              GC
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : n.archivo1 ? (
-                      <button
-                        onClick={() => window.open(n.archivo1, "_blank")}
-                        className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
-                      >
-                        Revisar GF
-                      </button>
-                    ) : n.archivo2 ? (
-                      <button
-                        onClick={() => window.open(n.archivo2, "_blank")}
-                        className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
-                      >
-                        Revisar GC
-                      </button>
-                    ) : (
-                      <span className="text-gray-400 text-xs">Sin archivo</span>
-                    )}
-                  </td>
+      {/* Menú lateral dentro de la celda */}
+      {menuAbierto === idx && (
+        <div className="flex gap-1">
+          <Link
+            to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+            className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
+          >
+            GF
+          </Link>
+          <Link
+            to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+            className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
+          >
+            GC
+          </Link>
+        </div>
+      )}
+    </div>
+  ) : n.archivo1 ? (
+    <Link
+      to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+      className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
+    >
+      Revisar GF
+    </Link>
+  ) : n.archivo2 ? (
+    <Link
+      to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+      className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
+    >
+      Revisar GC
+    </Link>
+  ) : (
+    <span className="text-gray-400 text-xs">Sin archivo</span>
+  )}
+</td>
                 </tr>
               ))}
               {filtrados.length === 0 && (
