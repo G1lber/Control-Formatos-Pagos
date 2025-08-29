@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.js";
 import knex from "./config/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import rechazoRoutes from "./routes/rechazo.js";
 
 dotenv.config();
 const app = express();
@@ -39,6 +40,7 @@ app.use(
 app.use("/api/usuarios", userRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
+app.use("/api", rechazoRoutes);
 
 // nueva ruta para olvidé contraseña
 app.use("/auth", authRoutes);
