@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
-import api from "../services/api"; // ✅ usamos el cliente
+import api from "../services/api";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendiente");
@@ -11,8 +11,39 @@ export default function Documentos() {
   const [fechaGC, setFechaGC] = useState("");
   const [documentos, setDocumentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
-  const [menuAbierto, setMenuAbierto] = useState(null); // 👈 controlamos el desplegable
-  const [query, setQuery] = useState(""); // 🔹 valor que activa
+  const [menuAbierto, setMenuAbierto] = useState(null);
+  const [query, setQuery] = useState("");
+  const dropdownRefs = useRef({}); // 👈 refs dinámicos por cada fila
+
+  // ⬆️ Agregar estados arriba de tu componente
+const [paginaActual, setPaginaActual] = useState(1);
+const usuariosPorPagina = 10;
+
+ // 1) PRIMERO: calcula `filtrados`
+const filtrados = documentos.filter((n) => {
+  const coincideEstado = filtro === "Todos" || n.estado?.nombre_estado === filtro;
+  const coincideBusqueda =
+    query === "" ||
+    n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
+    n.usuarioRef?.numero_doc?.toString().includes(query);
+  return coincideEstado && coincideBusqueda;
+});
+
+// 2) LUEGO: calcula índices y paginación usando `filtrados`
+const indiceUltimo = paginaActual * usuariosPorPagina;
+const indicePrimero = indiceUltimo - usuariosPorPagina;
+const usuariosPaginados = filtrados.slice(indicePrimero, indiceUltimo);
+
+// 3) Total de páginas
+const totalPaginas = Math.ceil(filtrados.length / usuariosPorPagina);
+
+// 4) Cambiar página
+const cambiarPagina = (num) => setPaginaActual(num);
+
+useEffect(() => {
+  setPaginaActual(1);
+}, [filtro, query]);
+
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -26,23 +57,24 @@ export default function Documentos() {
     cargarDatos();
   }, []);
 
-  // 🔹 Filtrado por estado y búsqueda
-  const filtrados = documentos.filter((n) => {
-    const coincideEstado =
-      filtro === "Todos" || n.estado?.nombre_estado === filtro;
+  // 👇 cerrar al hacer click fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        menuAbierto &&
+        dropdownRefs.current[menuAbierto] &&
+        !dropdownRefs.current[menuAbierto].contains(event.target)
+      ) {
+        setMenuAbierto(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuAbierto]);
 
-    const coincideBusqueda =
-      query === "" ||
-      n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
-      n.usuarioRef?.numero_doc?.toString().includes(query);
-
-    return coincideEstado && coincideBusqueda;
-  });
-
-  // 🔹 Manejo del submit
   const handleBuscar = (e) => {
     e.preventDefault();
-    setQuery(busqueda.trim()); // solo busca al dar click
+    setQuery(busqueda.trim());
   };
 
   const handleActivar = () => {
@@ -148,110 +180,211 @@ export default function Documentos() {
         </div>
 
         {/* Buscador */}
-
-    <form
-      onSubmit={handleBuscar}
-      className="flex items-center gap-2 mb-6"
-    >
-      <input
-        type="text"
-        placeholder="Buscar por nombre o documento"
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        className="flex-1 border px-4 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none"
-      />
-      <button
-        type="submit"
-        className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)]"
-      >
-        Buscar
-      </button>
-    </form>
-
-        {/* Tabla */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
-                <th className="p-3">Usuario</th>
-                <th className="p-3">Documento</th>
-                <th className="p-3">Archivo GF</th>
-                <th className="p-3">Archivo GC</th>
-                <th className="p-3">Fecha</th>
-                <th className="p-3">Estado</th>
-                <th className="p-3">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((n, idx) => (
-                <tr
-                  key={n.id || idx}
-                  className="border-b last:border-none hover:bg-gray-50 text-sm"
-                >
-                  <td className="p-3">{n.usuarioRef?.nombre || "—"}</td>
-                  <td className="p-3">{n.usuarioRef?.numero_doc || "—"}</td>
-                  <td className="p-3">{n.archivo1 ? "✔️" : "—"}</td>
-                  <td className="p-3">{n.archivo2 ? "✔️" : "—"}</td>
-                  <td className="p-3">{n.fecha}</td>
-                  <td className="p-3">{n.estado?.nombre_estado}</td>
-                  <td className="p-3">
-  {n.archivo1 && n.archivo2 ? (
-    <div className="flex items-center gap-2">
-      {/* Botón principal */}
-      <button
-        onClick={() => setMenuAbierto(menuAbierto === idx ? null : idx)}
-        className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs"
-      >
-        Revisar
-      </button>
-
-      {/* Menú lateral dentro de la celda */}
-      {menuAbierto === idx && (
-        <div className="flex gap-1">
-          <Link
-            to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
-            className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
+        <form onSubmit={handleBuscar} className="flex items-center gap-2 mb-6">
+          <input
+            type="text"
+            placeholder="Buscar por nombre o documento"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="flex-1 border px-4 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none"
+          />
+          <button
+            type="submit"
+            className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-hover)]"
           >
-            GF
-          </Link>
-          <Link
-            to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
-            className="px-3 py-1 text-xs rounded-md bg-[var(--color-secundario)] text-white hover:bg-[var(--color-hover-secundario)]"
-          >
-            GC
-          </Link>
-        </div>
-      )}
-    </div>
-  ) : n.archivo1 ? (
-    <Link
-      to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
-      className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
+            Buscar
+          </button>
+        </form>
+
+ {/* Tabla responsiva (PC) */}
+<div className="hidden md:block overflow-x-auto">
+  <table className="w-full border-collapse">
+    <thead>
+      <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
+        <th className="p-3">Usuario</th>
+        <th className="p-3">Documento</th>
+        <th className="p-3">Archivo GF</th>
+        <th className="p-3">Archivo GC</th>
+        <th className="p-3">Fecha de registro</th>
+        <th className="p-3">Estado</th>
+        <th className="p-3">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {usuariosPaginados.map((n, idx) => {
+        const key = `pc-${n.id || (indicePrimero + idx)}`;
+        return (
+          <tr key={key} className="border-b last:border-none hover:bg-gray-50 text-sm">
+            <td className="p-3">{n.usuarioRef?.nombre || "—"}</td>
+            <td className="p-3">{n.usuarioRef?.numero_doc || "—"}</td>
+            <td className="p-3">{n.archivo1 ? "✔️" : "—"}</td>
+            <td className="p-3">{n.archivo2 ? "✔️" : "—"}</td>
+            <td className="p-3">{n.fecha}</td>
+            <td className="p-3">{n.estado?.nombre_estado}</td>
+            <td className="p-3">
+              <div className="relative" ref={(el) => (dropdownRefs.current[key] = el)}>
+                {n.archivo1 && n.archivo2 ? (
+                  <>
+                    <button
+                      onClick={() =>
+                        setMenuAbierto(menuAbierto === key ? null : key)
+                      }
+                      className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] 
+                                text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
+                    >
+                      Revisar
+                    </button>
+                    {menuAbierto === key && (
+                      <div className="absolute left-0 mt-2 w-32 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg animate-fadeIn z-20">
+                        <Link
+                          to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                          onClick={() => setMenuAbierto(null)}
+                          className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
+                        >
+                          📄 Ver GF
+                        </Link>
+                        <Link
+                          to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                          onClick={() => setMenuAbierto(null)}
+                          className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-b-lg transition"
+                        >
+                          📄 Ver GC
+                        </Link>
+                      </div>
+                    )}
+                  </>
+                ) : n.archivo1 ? (
+                  <Link
+                    to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                    className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
+                  >
+                    Revisar GF
+                  </Link>
+                ) : n.archivo2 ? (
+                  <Link
+                    to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                    className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
+                  >
+                    Revisar GC
+                  </Link>
+                ) : (
+                  <span className="text-gray-400 text-xs">Sin archivo</span>
+                )}
+              </div>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
+
+{/* 🔹 Paginación */}
+<div className="flex justify-center items-center gap-2 mt-4">
+  <button
+    disabled={paginaActual === 1}
+    onClick={() => cambiarPagina(paginaActual - 1)}
+    className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+  >
+    ⬅️ Anterior
+  </button>
+
+  {Array.from({ length: totalPaginas }, (_, i) => (
+    <button
+      key={i}
+      onClick={() => cambiarPagina(i + 1)}
+      className={`px-3 py-1 rounded ${
+        paginaActual === i + 1
+          ? "bg-[var(--color-principal)] text-white"
+          : "bg-gray-100 hover:bg-gray-200"
+      }`}
     >
-      Revisar GF
-    </Link>
-  ) : n.archivo2 ? (
-    <Link
-      to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
-      className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs"
-    >
-      Revisar GC
-    </Link>
-  ) : (
-    <span className="text-gray-400 text-xs">Sin archivo</span>
-  )}
-</td>
-                </tr>
-              ))}
-              {filtrados.length === 0 && (
-                <tr>
-                  <td colSpan="7" className="text-center py-4 text-gray-500">
-                    No se encontraron resultados
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {i + 1}
+    </button>
+  ))}
+
+  <button
+    disabled={paginaActual === totalPaginas}
+    onClick={() => cambiarPagina(paginaActual + 1)}
+    className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+  >
+    Siguiente ➡️
+  </button>
+</div>
+
+
+        {/* Vista alternativa para móviles */}
+        <div className="md:hidden space-y-3">
+          
+          {usuariosPaginados.map((n, idx) => {
+          const key = `movil-${n.id || (indicePrimero + idx)}`;
+          return (
+            <div key={key} className="bg-white border rounded-lg shadow-sm p-4 text-sm space-y-2"
+                ref={(el) => (dropdownRefs.current[key] = el)}
+              >
+                <p><strong>👤 Usuario:</strong> {n.usuarioRef?.nombre || "—"}</p>
+                <p><strong>🆔 Documento:</strong> {n.usuarioRef?.numero_doc || "—"}</p>
+                <p><strong>📄 Archivo GF:</strong> {n.archivo1 ? "✔️" : "—"}</p>
+                <p><strong>📄 Archivo GC:</strong> {n.archivo2 ? "✔️" : "—"}</p>
+                <p><strong>📅 Fecha de registro:</strong> {n.fecha}</p>
+                <p><strong>📌 Estado:</strong> {n.estado?.nombre_estado}</p>
+
+                <div className="flex flex-wrap gap-2 relative">
+                  {n.archivo1 && n.archivo2 ? (
+                    <>
+                      <button
+                        onClick={() =>
+                          setMenuAbierto(menuAbierto === key ? null : key)
+                        }
+                        className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
+                      >
+                        Revisar
+                      </button>
+                      <div
+                        className={`absolute top-9 left-0 flex flex-col gap-1 text-white font-semibold text-xs rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out
+                          ${
+                            menuAbierto === key
+                              ? "opacity-100 scale-100 translate-y-0"
+                              : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                          }`}
+                      >
+                        <Link
+                          to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                          onClick={() => setMenuAbierto(null)}
+                          className="px-3 py-2 rounded-t-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition"
+                        >
+                          📄 Ver GF
+                        </Link>
+                        <Link
+                          to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                          onClick={() => setMenuAbierto(null)}
+                          className="px-3 py-2 rounded-b-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition"
+                        >
+                          📄 Ver GC
+                        </Link>
+                      </div>
+                    </>
+                  ) : n.archivo1 ? (
+                    <Link
+                      to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                      className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
+                    >
+                      Revisar GF
+                    </Link>
+                  ) : n.archivo2 ? (
+                    <Link
+                      to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                      className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
+                    >
+                      Revisar GC
+                    </Link>
+                  ) : (
+                    <span className="text-gray-400 text-xs">Sin archivo</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
