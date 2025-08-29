@@ -12,6 +12,7 @@
   --color-sombra:     rgba(0, 0, 0, 0.08);
   --borde-input:      #dcdcdc;
 }
+
 @keyframes fadeSlide {
   from {
     opacity: 0;
@@ -26,4 +27,5 @@
 .animate-fadeSlide {
   animation: fadeSlide 0.25s ease-out;
 }
+
 
