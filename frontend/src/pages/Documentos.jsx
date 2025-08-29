@@ -111,66 +111,69 @@ export default function Documentos() {
         Volver
       </Link>
 
-      {/* Columna izquierda */}
-      <Accordion.Root
-        type="multiple"
-        className="flex flex-col gap-6 w-full lg:w-1/3 min-w-0"
-      >
-        {/* Notificaciones */}
-        <CardDesplegable value="notificaciones" title="Notificaciones">
-          {documentos.map((n) => (
-            <div
-              key={n.id}
-              className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
-            >
-              <div>
-                <p className="text-sm">
-                  <strong>{n.usuarioRef?.nombre}</strong> subió{" "}
-                  <em>{n.archivo1 || n.archivo2 || "Sin archivo"}</em>
-                </p>
-                <small className="text-xs text-gray-500">{n.fecha}</small>
-              </div>
-              <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
-                Revisar
-              </button>
-            </div>
-          ))}
-        </CardDesplegable>
-
-        {/* Ajuste de Fechas */}
-        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+{/* Columna izquierda */}
+<Accordion.Root
+  type="multiple"
+  className="flex flex-col gap-6 w-full lg:w-1/3 min-w-0"
+>
+  {/* Notificaciones */}
+  <CardDesplegable value="notificaciones" title="Notificaciones">
+    <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
+      {documentos.map((n) => (
+        <div
+          key={n.id}
+          className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
+        >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha límite GF
-            </label>
-            <input
-              type="date"
-              value={fechaGF}
-              onChange={(e) => setFechaGF(e.target.value)}
-              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-            />
+            <p className="text-sm">
+              <strong>{n.usuarioRef?.nombre}</strong> subió{" "}
+              <em>{n.archivo1 || n.archivo2 || "Sin archivo"}</em>
+            </p>
+            <small className="text-xs text-gray-500">{n.fecha}</small>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha límite GC
-            </label>
-            <input
-              type="date"
-              value={fechaGC}
-              onChange={(e) => setFechaGC(e.target.value)}
-              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-            />
-          </div>
-
-          <button
-            onClick={handleActivar}
-            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
-          >
-            Activar
+          <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
+            Revisar
           </button>
-        </CardDesplegable>
-      </Accordion.Root>
+        </div>
+      ))}
+    </div>
+  </CardDesplegable>
+
+  {/* Ajuste de Fechas */}
+  <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Fecha límite GF
+      </label>
+      <input
+        type="date"
+        value={fechaGF}
+        onChange={(e) => setFechaGF(e.target.value)}
+        className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Fecha límite GC
+      </label>
+      <input
+        type="date"
+        value={fechaGC}
+        onChange={(e) => setFechaGC(e.target.value)}
+        className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+      />
+    </div>
+
+    <button
+      onClick={handleActivar}
+      className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+    >
+      Activar
+    </button>
+  </CardDesplegable>
+</Accordion.Root>
+
 
       {/* Columna derecha */}
       <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6 w-full lg:flex-1 min-w-0">
