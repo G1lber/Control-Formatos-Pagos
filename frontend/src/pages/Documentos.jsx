@@ -177,7 +177,8 @@ export default function Documentos() {
 
 
       {/* Columna derecha */}
-      <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-6 w-full lg:flex-1 min-w-0">
+      <div className="bg-[var(--color-blanco)] shadow-md rounded-2xl p-4 w-full lg:flex-1 min-w-0 h-fit">
+
         <h2 className="text-xl font-bold text-[var(--color-principal)] mb-4">
           Lista de Revisión
         </h2>
