@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
 import api from "../services/api";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendiente");
@@ -111,68 +112,68 @@ export default function Documentos() {
         Volver
       </Link>
 
-{/* Columna izquierda */}
-<Accordion.Root
-  type="multiple"
-  className="flex flex-col gap-6 w-full lg:w-1/3 min-w-0"
->
-  {/* Notificaciones */}
-  <CardDesplegable value="notificaciones" title="Notificaciones">
-    <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
-      {documentos.map((n) => (
-        <div
-          key={n.id}
-          className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
-        >
-          <div>
-            <p className="text-sm">
-              <strong>{n.usuarioRef?.nombre}</strong> subió{" "}
-              <em>{n.archivo1 || n.archivo2 || "Sin archivo"}</em>
-            </p>
-            <small className="text-xs text-gray-500">{n.fecha}</small>
+      {/* Columna izquierda */}
+      <Accordion.Root
+        type="multiple"
+        className="flex flex-col gap-6 w-full lg:w-1/3 min-w-0"
+      >
+        {/* Notificaciones */}
+        <CardDesplegable value="notificaciones" title="Notificaciones">
+          <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
+            {documentos.map((n) => (
+              <div
+                key={n.id}
+                className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
+              >
+                <div>
+                  <p className="text-sm">
+                    <strong>{n.usuarioRef?.nombre}</strong> subió{" "}
+                    <em>{n.archivo1 || n.archivo2 || "Sin archivo"}</em>
+                  </p>
+                  <small className="text-xs text-gray-500">{n.fecha}</small>
+                </div>
+                <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
+                  Revisar
+                </button>
+              </div>
+            ))}
           </div>
-          <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg">
-            Revisar
+        </CardDesplegable>
+
+        {/* Ajuste de Fechas */}
+        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GF
+            </label>
+            <input
+              type="date"
+              value={fechaGF}
+              onChange={(e) => setFechaGF(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GC
+            </label>
+            <input
+              type="date"
+              value={fechaGC}
+              onChange={(e) => setFechaGC(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
+
+          <button
+            onClick={handleActivar}
+            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+          >
+            Activar
           </button>
-        </div>
-      ))}
-    </div>
-  </CardDesplegable>
-
-  {/* Ajuste de Fechas */}
-  <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Fecha límite GF
-      </label>
-      <input
-        type="date"
-        value={fechaGF}
-        onChange={(e) => setFechaGF(e.target.value)}
-        className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Fecha límite GC
-      </label>
-      <input
-        type="date"
-        value={fechaGC}
-        onChange={(e) => setFechaGC(e.target.value)}
-        className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-      />
-    </div>
-
-    <button
-      onClick={handleActivar}
-      className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
-    >
-      Activar
-    </button>
-  </CardDesplegable>
-</Accordion.Root>
+        </CardDesplegable>
+      </Accordion.Root>
 
 
       {/* Columna derecha */}
@@ -317,32 +318,48 @@ export default function Documentos() {
 
         {/* Paginación */}
         <div className="flex justify-center items-center gap-2 mt-4 flex-wrap">
+          {/* Botón Anterior */}
           <button
             disabled={paginaActual === 1}
             onClick={() => cambiarPagina(paginaActual - 1)}
-            className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+            className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition 
+              ${paginaActual === 1 
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                : "bg-gray-200 hover:bg-gray-300 text-gray-700 shadow-sm"}
+            `}
           >
-            ⬅️ Anterior
+            <ChevronLeft size={18} />
+            Anterior
           </button>
+
+          {/* Números */}
           {Array.from({ length: totalPaginas }, (_, i) => (
             <button
               key={i}
               onClick={() => cambiarPagina(i + 1)}
-              className={`px-3 py-1 rounded ${
-                paginaActual === i + 1
-                  ? "bg-[var(--color-principal)] text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
+              className={`w-9 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition
+                ${
+                  paginaActual === i + 1
+                    ? "bg-[var(--color-principal)] text-white shadow-md"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
             >
               {i + 1}
             </button>
           ))}
+
+          {/* Botón Siguiente */}
           <button
             disabled={paginaActual === totalPaginas}
             onClick={() => cambiarPagina(paginaActual + 1)}
-            className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+            className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition
+              ${paginaActual === totalPaginas 
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                : "bg-gray-200 hover:bg-gray-300 text-gray-700 shadow-sm"}
+            `}
           >
-            Siguiente ➡️
+            Siguiente
+            <ChevronRight size={18} />
           </button>
         </div>
 
