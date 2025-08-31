@@ -17,6 +17,7 @@
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.541.0",
     "mammoth": "^1.10.0",
+    "moment-timezone": "^0.6.0",
     "react": "^19.1.1",
     "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.1.1",

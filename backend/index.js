@@ -10,6 +10,7 @@ import knex from "./config/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import rechazoRoutes from "./routes/rechazo.js";
+import fechasRoutes from "./routes/fechas.js";
 
 dotenv.config();
 const app = express();
@@ -37,6 +38,7 @@ app.use(
 );
 
 // rutas API
+app.use("/api/fechas", fechasRoutes);
 app.use("/api/usuarios", userRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
@@ -48,3 +50,4 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
 });
+

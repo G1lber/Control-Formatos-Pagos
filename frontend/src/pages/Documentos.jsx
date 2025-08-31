@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
 import api from "../services/api";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toColombiaDate } from "../utils/fecha";
+import {
+  toColombiaInputString,
+  inputColombiaToUTC,
+} from "../utils/fecha";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendiente");
@@ -13,24 +17,57 @@ export default function Documentos() {
   const [documentos, setDocumentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(null);
-  const [dropdownPos, setDropdownPos] = useState("down"); // 👈 dirección del menú
+  const [dropdownPos, setDropdownPos] = useState("down");
   const [query, setQuery] = useState("");
   const dropdownRefs = useRef({});
 
-  // paginación
+  // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 10;
 
   const filtrados = documentos.filter((n) => {
     const coincideEstado =
       filtro === "Todos" || n.estado?.nombre_estado === filtro;
+
     const coincideBusqueda =
       query === "" ||
       n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
       n.usuarioRef?.numero_doc?.toString().includes(query);
+
     return coincideEstado && coincideBusqueda;
   });
 
+  // Cargar fechas del backend
+useEffect(() => {
+  const fetchFechas = async () => {
+    try {
+      const { data } = await api.get("/fechas");
+      if (data) {
+        setFechaGF(data.fechaGF ? toColombiaInputString(data.fechaGF) : "");
+        setFechaGC(data.fechaGC ? toColombiaInputString(data.fechaGC) : "");
+      }
+    } catch (err) {
+      console.error("❌ Error al cargar fechas:", err);
+    }
+  };
+  fetchFechas();
+}, []);
+
+// Guardar en backend
+const handleActivar = async () => {
+  try {
+    await api.post("/fechas", {
+      fechaGF: fechaGF ? inputColombiaToUTC(fechaGF) : null,
+      fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
+    });
+    alert("Fechas guardadas ✅");
+  } catch (error) {
+    console.error("Error guardando fechas:", error);
+    alert("❌ Error al guardar fechas");
+  }
+};
+
+  // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
   const indicePrimero = indiceUltimo - usuariosPorPagina;
   const usuariosPaginados = filtrados.slice(indicePrimero, indiceUltimo);
@@ -42,11 +79,12 @@ export default function Documentos() {
     setPaginaActual(1);
   }, [filtro, query]);
 
+  // ✅ Cargar documentos
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         const res = await api.get("/documentos");
-        setDocumentos(res.data);
+        setDocumentos(res.data || []);
       } catch (error) {
         console.error("Error cargando documentos:", error);
       }
@@ -54,6 +92,7 @@ export default function Documentos() {
     cargarDatos();
   }, []);
 
+  // ✅ Cerrar menú desplegable al hacer click afuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -73,14 +112,6 @@ export default function Documentos() {
     setQuery(busqueda.trim());
   };
 
-  const handleActivar = () => {
-    alert(
-      `Fechas activadas:\nGF: ${fechaGF || "No definida"}\nGC: ${
-        fechaGC || "No definida"
-      }`
-    );
-  };
-
   // 👉 abre menú dinámico arriba o abajo según espacio
   const handleOpenMenu = (key, ref) => {
     if (menuAbierto === key) {
@@ -90,11 +121,7 @@ export default function Documentos() {
     if (ref?.current) {
       const rect = ref.current.getBoundingClientRect();
       const espacioAbajo = window.innerHeight - rect.bottom;
-      if (espacioAbajo < 150) {
-        setDropdownPos("up");
-      } else {
-        setDropdownPos("down");
-      }
+      setDropdownPos(espacioAbajo < 150 ? "up" : "down");
     }
     setMenuAbierto(key);
   };
@@ -141,38 +168,38 @@ export default function Documentos() {
         </CardDesplegable>
 
         {/* Ajuste de Fechas */}
-        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha límite GF
-            </label>
-            <input
-              type="date"
-              value={fechaGF}
-              onChange={(e) => setFechaGF(e.target.value)}
-              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-            />
-          </div>
+            <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha límite GF
+                </label>
+                <input
+                  type="datetime-local"
+                  value={fechaGF || ""}           // <- string para input
+                  onChange={(e) => setFechaGF(e.target.value)} // <- guardas string
+                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha límite GC
-            </label>
-            <input
-              type="date"
-              value={fechaGC}
-              onChange={(e) => setFechaGC(e.target.value)}
-              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha límite GC
+                </label>
+                <input
+                  type="datetime-local"
+                  value={fechaGC || ""}
+                  onChange={(e) => setFechaGC(e.target.value)}
+                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+                />
+              </div>
 
-          <button
-            onClick={handleActivar}
-            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
-          >
-            Activar
-          </button>
-        </CardDesplegable>
+              <button
+                onClick={handleActivar}
+                className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+              >
+                Activar
+              </button>
+            </CardDesplegable>
       </Accordion.Root>
 
 
