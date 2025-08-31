@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
+import axios from "axios";
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
@@ -10,10 +11,14 @@ export default function VisualizarArchivo() {
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
 
+  // Estado para modal y comentario
+  const [showModal, setShowModal] = useState(false);
+  const [comentario, setComentario] = useState("");
+
   // Detectar extensión real del archivo
   const extension = decodedUrl.split(".").pop().toLowerCase();
 
-  // 🔹 Renderizar DOCX con docx-preview
+  // Renderizar DOCX con docx-preview
   useEffect(() => {
     if (extension === "docx") {
       fetch(backendUrl)
@@ -25,6 +30,22 @@ export default function VisualizarArchivo() {
     }
   }, [extension, backendUrl]);
 
+   // Enviar comentario al backend
+    const handleEnviarComentario = async () => {
+    try {
+      await axios.post("http://localhost:4000/api/rechazo", {
+        documentoId: 123, // ⚠️ este ID lo recibes desde useParams()
+        mensaje: comentario,
+      });
+
+      alert("El comentario fue enviado al correo del contratista ✅");
+      setShowModal(false);
+      setComentario("");
+    } catch (error) {
+      console.error(error);
+      alert("Error enviando el correo ❌");
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
@@ -43,7 +64,7 @@ export default function VisualizarArchivo() {
 
         {/* Botón volver */}
         <button
-          onClick={() => navigate(-1)} // 🔙 volver atrás
+          onClick={() => navigate(-1)} 
           className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-md hover:bg-[var(--color-hover)]"
         >
           Volver
@@ -75,15 +96,47 @@ export default function VisualizarArchivo() {
 
           {/* Botones de acción */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
-            <button className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
+            <button 
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
               Rechazar
             </button>
+
             <button className="px-4 py-2 rounded-md bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]">
               Aprobar
             </button>
           </div>
         </div>
       </main>
+
+      {/* Modal para comentario */}
+      {showModal && (
+        <div className="fixed inset-0 bg-[var(--color-sombra)] bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Motivo del Rechazo</h2>
+            <textarea
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              className="w-full h-32 p-2 border rounded-md mb-4"
+              placeholder="Escribe el motivo..."
+            ></textarea>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleEnviarComentario}
+                className="px-4 py-2 rounded-md bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]"
+              >
+                Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
