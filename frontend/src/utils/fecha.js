@@ -37,7 +37,7 @@ export const toColombiaInputString = (fecha) => {
 };
 
 export const inputColombiaToUTC = (localStr) => {
-  // recibe "YYYY-MM-DDTHH:mm" (hora Colombia) y devuelve ISO UTC
   if (!localStr) return null;
-  return toColombiaDate(localStr).toISOString();
+  const localDate = new Date(localStr); // interpreta como hora local
+  return new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString();
 };

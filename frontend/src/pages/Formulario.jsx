@@ -125,12 +125,12 @@ export default function Formulario() {
               <option value="">Seleccione una opción</option>
               {isActivaColombia(fechas.GF) && (
                 <option value="GF">
-                  GF (Límite: {formatFechaColombia(fechas.GF)})
+                  GF 
                 </option>
               )}
               {isActivaColombia(fechas.GC) && (
                 <option value="GC">
-                  GC (Límite: {formatFechaColombia(fechas.GC)})
+                  GC 
                 </option>
               )}
             </select>
