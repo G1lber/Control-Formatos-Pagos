@@ -1,8 +1,8 @@
-// src/pages/Usuarios.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import UsuarioModal from "../components/ModalUsuario";
 import { Plus, ArrowLeft, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import ConfirmacionModal from "../components/ConfirmacionModal";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -17,6 +17,13 @@ export default function Usuarios() {
   // 🔹 Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 8;
+
+  // Confirmaciones
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [accion, setAccion] = useState(null);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [formData, setFormData] = useState(null);
+  const [error, setError] = useState("");
 
   const fetchUsuarios = async () => {
     try {
@@ -42,15 +49,10 @@ export default function Usuarios() {
     setModalOpen(true);
   };
 
-  const handleEliminar = async (id) => {
-    if (!confirm("¿Seguro que deseas eliminar este usuario?")) return;
-
-    try {
-      await fetch(`${API_URL}/usuarios/${id}`, { method: "DELETE" });
-      fetchUsuarios();
-    } catch (error) {
-      console.error("Error eliminando usuario:", error);
-    }
+  const handleEliminar = (usuarioId) => {
+    setUsuarioSeleccionado({ id: usuarioId });
+    setAccion("eliminar");
+    setConfirmOpen(true);
   };
 
   // 🔹 Filtro aplicado solo cuando se presiona Buscar
@@ -78,6 +80,66 @@ export default function Usuarios() {
   const handleBuscar = (e) => {
     e.preventDefault();
     setQuery(busqueda.trim());
+  };
+
+  // 🔹 Función unificada para confirmar todas las acciones
+  const confirmarAccion = async () => {
+    setError(""); // limpiar error antes de validar
+
+    // Validaciones únicas
+    if ((accion === "crear" || accion === "editar") && formData) {
+      const correoExistente = usuarios.find(
+        (u) =>
+          u.correo.toLowerCase() === formData.correo.toLowerCase() &&
+          (accion === "crear" || u.id !== usuarioEdit?.id)
+      );
+
+      const docExistente = usuarios.find(
+        (u) =>
+          u.numero_doc.toString() === formData.numero_doc.toString() &&
+          (accion === "crear" || u.id !== usuarioEdit?.id)
+      );
+
+      if (correoExistente) {
+        setError("⚠️ El correo ya está registrado.");
+        return;
+      }
+      if (docExistente) {
+        setError("⚠️ El número de documento ya está registrado.");
+        return;
+      }
+    }
+
+    try {
+      if (accion === "crear" && formData) {
+        await fetch(`${API_URL}/usuarios`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        fetchUsuarios();
+      } else if (accion === "editar" && formData && usuarioEdit) {
+        await fetch(`${API_URL}/usuarios/${usuarioEdit.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        fetchUsuarios();
+      } else if (accion === "eliminar" && usuarioSeleccionado) {
+        await fetch(`${API_URL}/usuarios/${usuarioSeleccionado.id}`, {
+          method: "DELETE",
+        });
+        fetchUsuarios();
+      }
+    } catch (error) {
+      console.error("Error en la acción:", error);
+    }
+
+    // 🔹 Cierra los modales si todo sale bien
+    setConfirmOpen(false);
+    setModalOpen(false);
+    setFormData(null);
+    setUsuarioEdit(null);
   };
 
   return (
@@ -191,7 +253,6 @@ export default function Usuarios() {
 
         {/* Paginación */}
         <div className="flex justify-center items-center gap-2 mt-4 flex-wrap">
-          {/* Botón Anterior */}
           <button
             disabled={paginaActual === 1}
             onClick={() => cambiarPagina(paginaActual - 1)}
@@ -207,7 +268,6 @@ export default function Usuarios() {
             Anterior
           </button>
 
-          {/* Números */}
           {Array.from({ length: totalPaginas }, (_, i) => (
             <button
               key={i}
@@ -223,7 +283,6 @@ export default function Usuarios() {
             </button>
           ))}
 
-          {/* Botón Siguiente */}
           <button
             disabled={paginaActual === totalPaginas || totalPaginas === 0}
             onClick={() => cambiarPagina(paginaActual + 1)}
@@ -241,12 +300,58 @@ export default function Usuarios() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal de Usuario */}
       <UsuarioModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={fetchUsuarios}
+        onClose={() => {
+          setModalOpen(false);
+          setUsuarioEdit(null);
+        }}
+        onSave={(data) => {
+          // Validaciones previas al confirmar
+          const correoExistente = usuarios.find(
+            (u) =>
+              u.correo.toLowerCase() === data.correo.toLowerCase() &&
+              (usuarioEdit ? u.id !== usuarioEdit.id : true)
+          );
+
+          const nombreExistente = usuarios.find(
+            (u) =>
+              u.nombre.toLowerCase() === data.nombre.toLowerCase() &&
+              (usuarioEdit ? u.id !== usuarioEdit.id : true)
+          );
+
+          if (correoExistente) {
+            setError("⚠️ El correo ya está registrado.");
+            setAccion(usuarioEdit ? "editar" : "crear");
+            setConfirmOpen(true);
+            return;
+          }
+          if (nombreExistente) {
+            setError("⚠️ El nombre ya está registrado.");
+            setAccion(usuarioEdit ? "editar" : "crear");
+            setConfirmOpen(true);
+            return;
+          }
+
+          setError("");
+          setFormData(data);
+          setAccion(usuarioEdit ? "editar" : "crear");
+          setConfirmOpen(true);
+        }}
         usuario={usuarioEdit}
+      />
+
+      {/* Modal de Confirmación */}
+      <ConfirmacionModal
+        isOpen={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setError("");
+        }}
+        onConfirm={confirmarAccion}
+        tipo={accion}
+        error={error}
       />
     </div>
   );

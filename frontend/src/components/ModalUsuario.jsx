@@ -1,148 +1,149 @@
 // src/components/UsuarioModal.jsx
 import { useState, useEffect } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { X } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
-  const [nombre, setNombre] = useState("");
-  const [numeroDoc, setNumeroDoc] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [rolId, setRolId] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    nombre: "",
+    numero_doc: "",
+    correo: "",
+    rol_id: 2,
+  });
 
   useEffect(() => {
-    if (usuario) {
-      setNombre(usuario.nombre || "");
-      setNumeroDoc(usuario.numero_doc || "");
-      setCorreo(usuario.correo || "");
-      setRolId(usuario.rol_id?.toString() || "");
-      setPassword(""); // limpiar siempre al abrir modal
-    } else {
-      setNombre("");
-      setNumeroDoc("");
-      setCorreo("");
-      setRolId("");
-      setPassword("");
+    if (isOpen) {
+      if (usuario) {
+        setFormData(usuario);
+      } else {
+        setFormData({
+          nombre: "",
+          numero_doc: "",
+          correo: "",
+          rol_id: 2,
+        });
+      }
     }
-  }, [usuario]);
+  }, [usuario, isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.nombre || !formData.numero_doc || !formData.correo) {
+      alert("Por favor, complete todos los campos obligatorios.");
+      return;
+    }
+    onSave(formData);
+  };
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Construir data dinámicamente
-    const data = { 
-      nombre, 
-      numero_doc: numeroDoc, 
-      correo, 
-      rol_id: rolId 
-    };
-
-    // Solo enviar contraseña si la escribió
-    if (rolId === "1" && password.trim() !== "") {
-      data.password = password;
-    }
-
-    try {
-      if (usuario) {
-        // Editar
-        await fetch(`${API_URL}/usuarios/${usuario.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      } else {
-        // Crear
-        await fetch(`${API_URL}/usuarios`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      }
-
-      onSave(); // refrescar tabla
-      onClose(); // cerrar modal
-    } catch (error) {
-      console.error("Error guardando usuario", error);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6">
-        <h2 className="text-xl text-center font-bold mb-4 text-[var(--color-principal)]">
-          {usuario ? "Editar Usuario" : "Crear Usuario"}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
-            required
-          />
-
-          <input
-            type="text"
-            placeholder="Número Documento"
-            value={numeroDoc}
-            onChange={(e) => setNumeroDoc(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
-            required
-          />
-
-          <input
-            type="email"
-            placeholder="Correo"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
-            required
-          />
-
-          <select
-            value={rolId}
-            onChange={(e) => setRolId(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
-            required
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="bg-[var(--color-blanco)] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeSlide"
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-4 bg-[var(--color-secundario)] text-[var(--color-blanco)]">
+          <h2 className="text-lg font-semibold">
+            {usuario ? "Editar Usuario" : "Crear Usuario"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="hover:text-gray-200 transition"
           >
-            <option value="">Seleccione Rol</option>
-            <option value="1">Admin</option>
-            <option value="2">Usuario</option>
-          </select>
+            <X size={22} />
+          </button>
+        </div>
 
-          {/* Campo contraseña solo si es Admin */}
-          {rolId === "1" && (
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
+              Nombre 
+            </label>
             <input
-              type="password"
-              placeholder={usuario ? "Nueva Contraseña" : "Contraseña"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border rounded-lg px-4 py-2"
-              required={!usuario} // obligatorio solo si se crea
+              type="text"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
+              required
             />
-          )}
+          </div>
 
-          <div className="flex justify-end gap-3 mt-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
+              Número de Documento 
+            </label>
+            <input
+              type="number"
+              name="numero_doc"
+              value={formData.numero_doc}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
+              Correo Electrónico 
+            </label>
+            <input
+              type="email"
+              name="correo"
+              value={formData.correo}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
+              Rol 
+            </label>
+            <select
+              name="rol_id"
+              value={formData.rol_id}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
+            >
+              <option value={1}>Administrador</option>
+              <option value={2}>Usuario</option>
+            </select>
+          </div>
+
+          {/* Botones */}
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded-lg"
+              className="px-5 py-2.5 rounded-xl text-sm font-medium border border-gray-300 text-[var(--color-secundario)] hover:bg-gray-100 transition"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[var(--color-principal)] text-white rounded-lg hover:bg-[var(--color-hover)]"
+              className="px-5 py-2.5 rounded-xl text-sm font-medium text-[var(--color-blanco)] bg-[var(--color-principal)] hover:bg-[var(--color-hover)] shadow-md transition"
             >
-              Guardar
+              {usuario ? "Guardar Cambios" : "Crear Usuario"}
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
