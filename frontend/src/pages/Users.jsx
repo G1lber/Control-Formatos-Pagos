@@ -14,7 +14,7 @@ export default function Usuarios() {
   const [modalOpen, setModalOpen] = useState(false);
   const [usuarioEdit, setUsuarioEdit] = useState(null);
 
-  // 🔹 Paginación
+  // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 8;
 
@@ -55,7 +55,7 @@ export default function Usuarios() {
     setConfirmOpen(true);
   };
 
-  // 🔹 Filtro aplicado solo cuando se presiona Buscar
+  // Filtro
   const usuariosFiltrados = usuarios.filter(
     (u) =>
       query === "" ||
@@ -63,7 +63,7 @@ export default function Usuarios() {
       u.numero_doc.toString().includes(query)
   );
 
-  // 🔹 Cálculo de paginado
+  // Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
   const indicePrimero = indiceUltimo - usuariosPorPagina;
   const usuariosPaginados = usuariosFiltrados.slice(indicePrimero, indiceUltimo);
@@ -71,22 +71,18 @@ export default function Usuarios() {
   const totalPaginas = Math.ceil(usuariosFiltrados.length / usuariosPorPagina);
   const cambiarPagina = (num) => setPaginaActual(num);
 
-  // 🔹 Resetear a página 1 cuando cambia búsqueda
   useEffect(() => {
     setPaginaActual(1);
   }, [query]);
 
-  // 🔹 Función para activar búsqueda
   const handleBuscar = (e) => {
     e.preventDefault();
     setQuery(busqueda.trim());
   };
 
-  // 🔹 Función unificada para confirmar todas las acciones
   const confirmarAccion = async () => {
-    setError(""); // limpiar error antes de validar
+    setError("");
 
-    // Validaciones únicas
     if ((accion === "crear" || accion === "editar") && formData) {
       const correoExistente = usuarios.find(
         (u) =>
@@ -135,7 +131,6 @@ export default function Usuarios() {
       console.error("Error en la acción:", error);
     }
 
-    // 🔹 Cierra los modales si todo sale bien
     setConfirmOpen(false);
     setModalOpen(false);
     setFormData(null);
@@ -143,111 +138,159 @@ export default function Usuarios() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center px-2 py-8">
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-lg p-6 flex flex-col gap-6 max-h-[85vh] flex-col justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center px-2 py-6 sm:py-10">
+      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col gap-6">
+        
         {/* Header */}
-        <div>
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
-            >
-              <ArrowLeft size={18} /> Volver
-            </button>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition w-full sm:w-auto justify-center"
+          >
+            <ArrowLeft size={18} /> Volver
+          </button>
 
-            <h1 className="text-2xl font-bold text-gray-800">
-              Gestión de Usuarios
-            </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 text-center">
+            Gestión de Usuarios
+          </h1>
 
-            <button
-              onClick={handleCrear}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
-            >
-              <Plus size={18} /> Crear Usuario
-            </button>
+          <button
+            onClick={handleCrear}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition w-full sm:w-auto justify-center"
+          >
+            <Plus size={18} /> Crear Usuario
+          </button>
+        </div>
+
+        {/* Buscador */}
+        <form
+          onSubmit={handleBuscar}
+          className="flex flex-col sm:flex-row items-stretch gap-2"
+        >
+          <div className="flex items-center flex-1 border rounded-lg overflow-hidden shadow-sm">
+            <Search className="ml-3 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o documento..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="flex-1 px-3 py-2 outline-none text-sm"
+            />
           </div>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
+          >
+            Buscar
+          </button>
+        </form>
 
-          {/* Buscador */}
-          <form onSubmit={handleBuscar} className="flex items-center gap-2 mb-6">
-            <div className="flex items-center flex-1 border rounded-lg overflow-hidden shadow-sm">
-              <Search className="ml-3 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar por nombre o documento..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="flex-1 px-3 py-2 outline-none text-sm"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
-            >
-              Buscar
-            </button>
-          </form>
-
-          {/* Tabla */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-[var(--color-principal)]/10 text-gray-700">
-                  <th className="p-3 text-left">Nombre</th>
-                  <th className="p-3 text-left">Documento</th>
-                  <th className="p-3 text-left">Rol</th>
-                  <th className="p-3 text-left">Correo</th>
-                  <th className="p-3 text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuariosPaginados.length > 0 ? (
-                  usuariosPaginados.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-b last:border-none hover:bg-gray-50"
-                    >
-                      <td className="p-3">{u.nombre}</td>
-                      <td className="p-3">{u.numero_doc}</td>
-                      <td className="p-3">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            u.rol_id === 1
-                              ? "bg-green-100 text-[var(--color-principal)]"
-                              : "bg-blue-100 text-[var(--color-secundario)]"
-                          }`}
-                        >
-                          {u.rol_id === 1 ? "Admin" : "Usuario"}
-                        </span>
-                      </td>
-                      <td className="p-3">{u.correo}</td>
-                      <td className="p-3 flex justify-center gap-2">
-                        <button
-                          onClick={() => handleEditar(u)}
-                          className="px-3 py-1 rounded-lg text-xs font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleEliminar(u.id)}
-                          className="px-3 py-1 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition"
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="text-center py-6 text-gray-500 text-sm"
-                    >
-                      No se encontraron usuarios
+        {/* Tabla / Cards en móvil */}
+        <div className="overflow-x-auto">
+          <table className="hidden sm:table w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-[var(--color-principal)]/10 text-gray-700">
+                <th className="p-3 text-left">Nombre</th>
+                <th className="p-3 text-left">Documento</th>
+                <th className="p-3 text-left">Rol</th>
+                <th className="p-3 text-left">Correo</th>
+                <th className="p-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuariosPaginados.length > 0 ? (
+                usuariosPaginados.map((u) => (
+                  <tr
+                    key={u.id}
+                    className="border-b last:border-none hover:bg-gray-50"
+                  >
+                    <td className="p-3">{u.nombre}</td>
+                    <td className="p-3">{u.numero_doc}</td>
+                    <td className="p-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          u.rol_id === 1
+                            ? "bg-green-100 text-[var(--color-principal)]"
+                            : "bg-blue-100 text-[var(--color-secundario)]"
+                        }`}
+                      >
+                        {u.rol_id === 1 ? "Admin" : "Usuario"}
+                      </span>
+                    </td>
+                    <td className="p-3">{u.correo}</td>
+                    <td className="p-3 flex justify-center gap-2">
+                      <button
+                        onClick={() => handleEditar(u)}
+                        className="px-3 py-1 rounded-lg text-xs font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminar(u.id)}
+                        className="px-3 py-1 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="text-center py-6 text-gray-500 text-sm"
+                  >
+                    No se encontraron usuarios
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Vista móvil como cards */}
+          <div className="sm:hidden flex flex-col gap-4">
+            {usuariosPaginados.length > 0 ? (
+              usuariosPaginados.map((u) => (
+                <div
+                  key={u.id}
+                  className="p-4 rounded-xl border shadow-sm bg-white flex flex-col gap-2"
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-800">{u.nombre}</h3>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        u.rol_id === 1
+                          ? "bg-green-100 text-[var(--color-principal)]"
+                          : "bg-blue-100 text-[var(--color-secundario)]"
+                      }`}
+                    >
+                      {u.rol_id === 1 ? "Admin" : "Usuario"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">📄 {u.numero_doc}</p>
+                  <p className="text-sm text-gray-600">✉️ {u.correo}</p>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => handleEditar(u)}
+                      className="flex-1 px-3 py-1 rounded-lg text-xs font-medium text-white bg-[var(--color-principal)] hover:bg-[var(--color-hover)] transition"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleEliminar(u.id)}
+                      className="flex-1 px-3 py-1 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center py-6 text-gray-500 text-sm">
+                No se encontraron usuarios
+              </p>
+            )}
           </div>
         </div>
 
@@ -256,7 +299,7 @@ export default function Usuarios() {
           <button
             disabled={paginaActual === 1}
             onClick={() => cambiarPagina(paginaActual - 1)}
-            className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition 
+            className={`flex items-center gap-1 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition 
               ${
                 paginaActual === 1
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -265,14 +308,14 @@ export default function Usuarios() {
             `}
           >
             <ChevronLeft size={18} />
-            Anterior
+            <span className="hidden sm:inline">Anterior</span>
           </button>
 
           {Array.from({ length: totalPaginas }, (_, i) => (
             <button
               key={i}
               onClick={() => cambiarPagina(i + 1)}
-              className={`w-9 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition
+              className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-sm font-semibold transition
                 ${
                   paginaActual === i + 1
                     ? "bg-[var(--color-principal)] text-white shadow-md"
@@ -286,7 +329,7 @@ export default function Usuarios() {
           <button
             disabled={paginaActual === totalPaginas || totalPaginas === 0}
             onClick={() => cambiarPagina(paginaActual + 1)}
-            className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition
+            className={`flex items-center gap-1 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition
               ${
                 paginaActual === totalPaginas || totalPaginas === 0
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -294,13 +337,13 @@ export default function Usuarios() {
               }
             `}
           >
-            Siguiente
+            <span className="hidden sm:inline">Siguiente</span>
             <ChevronRight size={18} />
           </button>
         </div>
       </div>
 
-      {/* Modal de Usuario */}
+      {/* Modal Usuario */}
       <UsuarioModal
         isOpen={modalOpen}
         onClose={() => {
@@ -308,27 +351,14 @@ export default function Usuarios() {
           setUsuarioEdit(null);
         }}
         onSave={(data) => {
-          // Validaciones previas al confirmar
           const correoExistente = usuarios.find(
             (u) =>
               u.correo.toLowerCase() === data.correo.toLowerCase() &&
               (usuarioEdit ? u.id !== usuarioEdit.id : true)
           );
 
-          const nombreExistente = usuarios.find(
-            (u) =>
-              u.nombre.toLowerCase() === data.nombre.toLowerCase() &&
-              (usuarioEdit ? u.id !== usuarioEdit.id : true)
-          );
-
           if (correoExistente) {
             setError("⚠️ El correo ya está registrado.");
-            setAccion(usuarioEdit ? "editar" : "crear");
-            setConfirmOpen(true);
-            return;
-          }
-          if (nombreExistente) {
-            setError("⚠️ El nombre ya está registrado.");
             setAccion(usuarioEdit ? "editar" : "crear");
             setConfirmOpen(true);
             return;
@@ -342,7 +372,7 @@ export default function Usuarios() {
         usuario={usuarioEdit}
       />
 
-      {/* Modal de Confirmación */}
+      {/* Modal Confirmación */}
       <ConfirmacionModal
         isOpen={confirmOpen}
         onClose={() => {

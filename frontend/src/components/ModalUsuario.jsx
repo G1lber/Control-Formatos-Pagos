@@ -55,7 +55,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
         className="bg-[var(--color-blanco)] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeSlide"
       >
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 bg-[var(--color-secundario)] text-[var(--color-blanco)]">
+        <div className="flex justify-between items-center px-6 py-4 bg-[var(--color-principal)] text-[var(--color-blanco)]">
           <h2 className="text-lg font-semibold">
             {usuario ? "Editar Usuario" : "Crear Usuario"}
           </h2>
