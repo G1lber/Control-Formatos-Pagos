@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.12",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -25,8 +26,11 @@
     "knex": "^3.1.0",
     "multer": "^2.0.2",
     "mysql2": "^3.14.3",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.6",
     "objection": "^3.1.5",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
 import api from "../services/api";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toColombiaDate } from "../utils/fecha";
+import {
+  toColombiaInputString,
+  inputColombiaToUTC,
+} from "../utils/fecha";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendiente");
@@ -17,20 +21,53 @@ export default function Documentos() {
   const [query, setQuery] = useState("");
   const dropdownRefs = useRef({});
 
-  // paginación
+  // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 12;
 
   const filtrados = documentos.filter((n) => {
     const coincideEstado =
       filtro === "Todos" || n.estado?.nombre_estado === filtro;
+
     const coincideBusqueda =
       query === "" ||
       n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
       n.usuarioRef?.numero_doc?.toString().includes(query);
+
     return coincideEstado && coincideBusqueda;
   });
 
+  // Cargar fechas del backend
+useEffect(() => {
+  const fetchFechas = async () => {
+    try {
+      const { data } = await api.get("/fechas");
+      if (data) {
+        setFechaGF(data.fechaGF ? toColombiaInputString(data.fechaGF) : "");
+        setFechaGC(data.fechaGC ? toColombiaInputString(data.fechaGC) : "");
+      }
+    } catch (err) {
+      console.error("❌ Error al cargar fechas:", err);
+    }
+  };
+  fetchFechas();
+}, []);
+
+// Guardar en backend
+const handleActivar = async () => {
+  try {
+    await api.post("/fechas", {
+      fechaGF: fechaGF ? inputColombiaToUTC(fechaGF) : null,
+      fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
+    });
+    alert("Fechas guardadas ✅");
+  } catch (error) {
+    console.error("Error guardando fechas:", error);
+    alert("❌ Error al guardar fechas");
+  }
+};
+
+  // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
   const indicePrimero = indiceUltimo - usuariosPorPagina;
   const usuariosPaginados = filtrados.slice(indicePrimero, indiceUltimo);
@@ -42,11 +79,12 @@ export default function Documentos() {
     setPaginaActual(1);
   }, [filtro, query]);
 
+  // ✅ Cargar documentos
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         const res = await api.get("/documentos");
-        setDocumentos(res.data);
+        setDocumentos(res.data || []);
       } catch (error) {
         console.error("Error cargando documentos:", error);
       }
@@ -54,6 +92,7 @@ export default function Documentos() {
     cargarDatos();
   }, []);
 
+  // ✅ Cerrar menú desplegable al hacer click afuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -80,7 +119,7 @@ export default function Documentos() {
       }`
     );
   };
-
+  // 👉 abre menú dinámico arriba o abajo segú
   const handleOpenMenu = (key, ref) => {
     if (menuAbierto === key) {
       setMenuAbierto(null);
@@ -89,11 +128,7 @@ export default function Documentos() {
     if (ref?.current) {
       const rect = ref.current.getBoundingClientRect();
       const espacioAbajo = window.innerHeight - rect.bottom;
-      if (espacioAbajo < 150) {
-        setDropdownPos("up");
-      } else {
-        setDropdownPos("down");
-      }
+      setDropdownPos(espacioAbajo < 150 ? "up" : "down");
     }
     setMenuAbierto(key);
   };
@@ -103,9 +138,15 @@ export default function Documentos() {
       {/* Botón Volver */}
       <Link
         to="/menu"
+
         className="lg:absolute top-4 md:top-6 right-4 md:right-6 flex items-center gap-1 bg-[var(--color-principal)] 
                     text-white px-3 py-2 md:px-4 md:py-2 rounded-md shadow-md hover:bg-[var(--color-hover)] 
                     transition text-sm mb-4 lg:mb-0 self-end lg:self-auto z-10"
+
+        className="absolute top-15 right-10 transform -translate-y-1/2 flex items-center gap-1 bg-[var(--color-principal)] 
+           text-white px-2 py-1 rounded-md shadow-md hover:bg-[var(--color-hover)] 
+           transition text-sm"
+
       >
         <ArrowLeft size={14} />
         <span className="hidden sm:inline">Volver</span>
@@ -140,6 +181,7 @@ export default function Documentos() {
         </CardDesplegable>
 
         {/* Ajuste de Fechas */}
+
         <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
           <div className="mb-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -164,14 +206,38 @@ export default function Documentos() {
               className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
             />
           </div>
+            <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha límite GF
+                </label>
+                <input
+                  type="datetime-local"
+                  value={fechaGF || ""}           // <- string para input
+                  onChange={(e) => setFechaGF(e.target.value)} // <- guardas string
+                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+                />
+              </div>
 
-          <button
-            onClick={handleActivar}
-            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
-          >
-            Activar
-          </button>
-        </CardDesplegable>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha límite GC
+                </label>
+                <input
+                  type="datetime-local"
+                  value={fechaGC || ""}
+                  onChange={(e) => setFechaGC(e.target.value)}
+                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+                />
+              </div>
+
+              <button
+                onClick={handleActivar}
+                className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+              >
+                Activar
+              </button>
+            </CardDesplegable>
       </Accordion.Root>
 
       {/* Columna derecha - Lista de Revisión */}

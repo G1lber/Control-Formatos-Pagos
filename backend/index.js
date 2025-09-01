@@ -4,10 +4,13 @@ import dotenv from "dotenv";
 import { Model } from "objection";
 import userRoutes from "./routes/usuarios.js";
 import loginRoutes from "./routes/login.js";
-import documentosRoutes from "./routes/documentos.js";
+import documentosRoutes from "./routes/documentos.js"
+import authRoutes from "./routes/auth.js";
 import knex from "./config/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import rechazoRoutes from "./routes/rechazo.js";
+import fechasRoutes from "./routes/fechas.js";
 
 dotenv.config();
 const app = express();
@@ -35,11 +38,16 @@ app.use(
 );
 
 // rutas API
+app.use("/api/fechas", fechasRoutes);
 app.use("/api/usuarios", userRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
+app.use("/api", rechazoRoutes);
 
+// nueva ruta para olvidé contraseña
+app.use("/auth", authRoutes);
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
 });
+
