@@ -22,7 +22,7 @@ transporter.verify((error, success) => {
   }
 });
 
-export const sendMail = async (to, subject, text) => {
+export const sendMail = async (to, subject, text) =>{
   try {
     const mailOptions = {
       from: `"Control de Pagos Sena" <${process.env.SMTP_USER}>`,

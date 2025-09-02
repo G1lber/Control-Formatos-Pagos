@@ -12,6 +12,7 @@ export default function VisualizarArchivo() {
   const docxContainerRef = useRef(null);
   const [searchParams] = useSearchParams();
   const documentoId = searchParams.get("id");
+  const [tipoArchivo, setTipoArchivo] = useState("");
 
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
@@ -37,7 +38,8 @@ export default function VisualizarArchivo() {
     try {
       await axios.post("http://localhost:4000/api/rechazo", {
         documentoId, // ⚠️ este ID lo recibes desde useParams()
-        mensaje: comentario
+        mensaje: comentario,
+        tipoArchivo
       });
 
       alert("El comentario fue enviado al correo del contratista ✅");
@@ -99,7 +101,10 @@ export default function VisualizarArchivo() {
           {/* Botones de acción */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
             <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setTipoArchivo(tipo === "gf" ? "archivo1" : "archivo2"); // según la ruta
+              setShowModal(true)
+            }}
             className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
               Rechazar
             </button>
