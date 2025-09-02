@@ -320,18 +320,14 @@ const handleActivar = async () => {
                                   } right-0 w-40 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg z-50`}
                                 >
                                   <Link
-                                    to={`/ver/gf/${encodeURIComponent(
-                                      n.archivo1
-                                    )}`}
+                                    to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
                                   >
                                     📄 Ver GF
                                   </Link>
                                   <Link
-                                    to={`/ver/gc/${encodeURIComponent(
-                                      n.archivo2
-                                    )}`}
+                                    to={`/ver/gc/${encodeURIComponent(n.archivo2)}?id=${n.id}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-b-lg transition"
                                   >
@@ -445,14 +441,14 @@ const handleActivar = async () => {
                             } left-0 right-0 flex flex-col gap-1 text-white font-semibold text-sm rounded-lg shadow-lg z-50`}
                           >
                             <Link
-                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               onClick={() => setMenuAbierto(null)}
                               className="px-4 py-2 rounded-t-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition text-center"
                             >
                               📄 Ver GF
                             </Link>
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                              to={`/ver/gc/${encodeURIComponent(n.archivo2)}?id=${n.id}`}
                               onClick={() => setMenuAbierto(null)}
                               className="px-4 py-2 rounded-b-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition text-center"
                             >
