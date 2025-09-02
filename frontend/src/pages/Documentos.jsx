@@ -112,7 +112,7 @@ const handleActivar = async () => {
     setQuery(busqueda.trim());
   };
 
-  const handleActivar = () => {
+  const handleActivar1 = () => {
     alert(
       `Fechas activadas:\nGF: ${fechaGF || "No definida"}\nGC: ${
         fechaGC || "No definida"
@@ -143,9 +143,7 @@ const handleActivar = async () => {
                     text-white px-3 py-2 md:px-4 md:py-2 rounded-md shadow-md hover:bg-[var(--color-hover)] 
                     transition text-sm mb-4 lg:mb-0 self-end lg:self-auto z-10"
 
-        className="absolute top-15 right-10 transform -translate-y-1/2 flex items-center gap-1 bg-[var(--color-principal)] 
-           text-white px-2 py-1 rounded-md shadow-md hover:bg-[var(--color-hover)] 
-           transition text-sm"
+
 
       >
         <ArrowLeft size={14} />
@@ -182,30 +180,7 @@ const handleActivar = async () => {
 
         {/* Ajuste de Fechas */}
 
-        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha límite GF
-            </label>
-            <input
-              type="date"
-              value={fechaGF}
-              onChange={(e) => setFechaGF(e.target.value)}
-              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha límite GC
-            </label>
-            <input
-              type="date"
-              value={fechaGC}
-              onChange={(e) => setFechaGC(e.target.value)}
-              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-            />
-          </div>
+  
             <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
