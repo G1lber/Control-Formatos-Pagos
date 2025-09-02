@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../services/api.js";
-import {
-  isActivaColombia,
-  formatFechaColombia,
-} from "../utils/fecha.js";
+import { isActivaColombia, formatFechaColombia } from "../utils/fecha.js";
+import AlertaModal from "../components/AlertaModal.jsx";
 
 export default function Formulario() {
   const [documento, setDocumento] = useState("");
@@ -12,14 +10,33 @@ export default function Formulario() {
   const [fechas, setFechas] = useState({ GF: null, GC: null });
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Obtener fechas desde backend (formato { fechaGF, fechaGC })
+  const [alerta, setAlerta] = useState({
+    isOpen: false,
+    tipo: "info",
+    mensaje: "",
+  });
+
+  const mostrarAlerta = (tipo, mensaje) => {
+    setAlerta({ isOpen: true, tipo, mensaje });
+  };
+
+  // 🔹 Auto-cierre del modal después de unos segundos
+  useEffect(() => {
+    if (alerta.isOpen) {
+      const tiempo = alerta.tipo === "success" ? 3000 : 5000; // ms
+      const timer = setTimeout(() => {
+        setAlerta((prev) => ({ ...prev, isOpen: false }));
+      }, tiempo);
+
+      return () => clearTimeout(timer);
+    }
+  }, [alerta]);
+
+  // 🔹 Obtener fechas desde backend
   useEffect(() => {
     const fetchFechas = async () => {
       try {
         const { data } = await api.get("/fechas");
-
-        // Nos aseguramos que las fechas se guarden "limpias" en UTC,
-        // pero pensadas para Colombia
         setFechas({
           GF: data?.fechaGF ?? null,
           GC: data?.fechaGC ?? null,
@@ -43,18 +60,21 @@ export default function Formulario() {
     // }
 
     if (!archivo) {
-      alert("Debes subir un archivo");
+      mostrarAlerta("error", "Debes subir un archivo");
       return;
     }
 
     const formData = new FormData();
     formData.append("numero_doc", documento);
-    formData.append("tipo", tipo); // "GF" | "GC"
+    formData.append("tipo", tipo);
     formData.append("archivo", archivo);
 
     try {
       const res = await api.post("/documentos", formData);
-      alert(res.data?.mensaje || "✅ Archivo subido correctamente");
+      mostrarAlerta(
+        "success",
+        res.data?.mensaje || "✅ Archivo subido correctamente"
+      );
 
       // Reset
       setDocumento("");
@@ -64,7 +84,10 @@ export default function Formulario() {
       if (fileInput) fileInput.value = "";
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.error || "❌ Error en la operación");
+      mostrarAlerta(
+        "error",
+        err.response?.data?.error || "❌ Error en la operación"
+      );
     }
   };
 
@@ -176,6 +199,14 @@ export default function Formulario() {
           </>
         )}
       </form>
+
+      {/* 🔹 Modal de alertas */}
+      <AlertaModal
+        isOpen={alerta.isOpen}
+        tipo={alerta.tipo}
+        mensaje={alerta.mensaje}
+        onClose={() => setAlerta({ ...alerta, isOpen: false })}
+      />
     </div>
   );
 }
