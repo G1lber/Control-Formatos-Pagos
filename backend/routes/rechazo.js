@@ -53,8 +53,8 @@ router.post("/rechazo", async (req, res) => {
       emailHtml
     );
 
-    console.log("✅ Correo enviado exitosamente");
-    res.json({ success: true, msg: "Correo enviado correctamente ✅", destinatario: documento.correo });
+    // console.log("✅ Correo enviado exitosamente");
+    // res.json({ success: true, msg: "Correo enviado correctamente ✅", destinatario: documento.correo });
 
   } catch (error) {
     console.error("❌ Error completo:", error);
