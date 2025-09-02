@@ -1,18 +1,15 @@
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
-import axios from "axios";
+import api from "../services/api.js"; // 👈 aquí usas tu instancia en lugar de axios
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
   const decodedUrl = decodeURIComponent(rawFile);
 
-  const backendUrl = `http://localhost:4000/uploads/${decodedUrl}`;
+  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`;
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
-  const [searchParams] = useSearchParams();
-  const documentoId = searchParams.get("id");
-  const [tipoArchivo, setTipoArchivo] = useState("");
 
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
@@ -33,11 +30,11 @@ export default function VisualizarArchivo() {
     }
   }, [extension, backendUrl]);
 
-   // Enviar comentario al backend
-    const handleEnviarComentario = async () => {
+  // Enviar comentario al backend
+  const handleEnviarComentario = async () => {
     try {
-      await axios.post("http://localhost:4000/api/rechazo", {
-        documentoId, // ⚠️ este ID lo recibes desde useParams()
+      await api.post("/api/rechazo", {
+        documentoId, 
         mensaje: comentario,
         tipoArchivo
       });
@@ -101,10 +98,7 @@ export default function VisualizarArchivo() {
           {/* Botones de acción */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
             <button 
-            onClick={() => {
-              setTipoArchivo(tipo === "gf" ? "archivo1" : "archivo2"); // según la ruta
-              setShowModal(true)
-            }}
+            onClick={() => setShowModal(true)}
             className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
               Rechazar
             </button>
