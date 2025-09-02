@@ -37,10 +37,10 @@ export default function Formulario() {
     e.preventDefault();
 
     // Validar justo antes de enviar en hora Colombia
-    if (!tipo || !isActivaColombia(fechas[tipo])) {
-      alert("⚠️ La fecha límite para este tipo ya venció o no es válida.");
-      return;
-    }
+    // if (!tipo || !isActivaColombia(fechas[tipo])) {
+    //   alert("⚠️ La fecha límite para este tipo ya venció o no es válida.");
+    //   return;
+    // }
 
     if (!archivo) {
       alert("Debes subir un archivo");
@@ -124,12 +124,12 @@ export default function Formulario() {
             >
               <option value="">Seleccione una opción</option>
               {isActivaColombia(fechas.GF) && (
-                <option value="GF">
+                <option value="1">
                   GF 
                 </option>
               )}
               {isActivaColombia(fechas.GC) && (
-                <option value="GC">
+                <option value="2">
                   GC 
                 </option>
               )}
