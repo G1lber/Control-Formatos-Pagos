@@ -8,19 +8,27 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
     nombre: "",
     numero_doc: "",
     correo: "",
-    rol_id: 2,
+    rol_id: "2",
+    password: "",
   });
 
   useEffect(() => {
     if (isOpen) {
       if (usuario) {
-        setFormData(usuario);
+        setFormData({
+          nombre: usuario.nombre || "",
+          numero_doc: usuario.numero_doc || "",
+          correo: usuario.correo || "",
+          rol_id: usuario.rol_id?.toString() || "2",
+          password: "", // limpiar siempre
+        });
       } else {
         setFormData({
           nombre: "",
           numero_doc: "",
           correo: "",
-          rol_id: 2,
+          rol_id: "2",
+          password: "",
         });
       }
     }
@@ -40,7 +48,21 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
       alert("Por favor, complete todos los campos obligatorios.");
       return;
     }
-    onSave(formData);
+
+    // Construir data dinámica
+    const data = {
+      nombre: formData.nombre,
+      numero_doc: formData.numero_doc,
+      correo: formData.correo,
+      rol_id: formData.rol_id,
+    };
+
+    // Solo enviar contraseña si es admin y se escribió
+    if (formData.rol_id === "1" && formData.password.trim() !== "") {
+      data.password = formData.password;
+    }
+
+    onSave(data);
   };
 
   if (!isOpen) return null;
@@ -59,10 +81,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
           <h2 className="text-lg font-semibold">
             {usuario ? "Editar Usuario" : "Crear Usuario"}
           </h2>
-          <button
-            onClick={onClose}
-            className="hover:text-gray-200 transition"
-          >
+          <button onClick={onClose} className="hover:text-gray-200 transition">
             <X size={22} />
           </button>
         </div>
@@ -71,7 +90,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
             <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
-              Nombre 
+              Nombre
             </label>
             <input
               type="text"
@@ -85,7 +104,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
-              Número de Documento 
+              Número de Documento
             </label>
             <input
               type="number"
@@ -99,7 +118,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
-              Correo Electrónico 
+              Correo Electrónico
             </label>
             <input
               type="email"
@@ -113,7 +132,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
-              Rol 
+              Rol
             </label>
             <select
               name="rol_id"
@@ -121,10 +140,27 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
             >
-              <option value={1}>Administrador</option>
-              <option value={2}>Usuario</option>
+              <option value="1">Administrador</option>
+              <option value="2">Usuario</option>
             </select>
           </div>
+
+          {/* Campo contraseña solo si es Admin */}
+          {formData.rol_id === "1" && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
+                {usuario ? "Nueva Contraseña" : "Contraseña"}
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
+                required={!usuario} // obligatorio solo si se crea
+              />
+            </div>
+          )}
 
           {/* Botones */}
           <div className="flex justify-end gap-3 pt-4">
