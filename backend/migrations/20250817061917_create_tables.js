@@ -72,9 +72,9 @@ export async function up(knex) {
 
   // Insertar estados iniciales
   await knex("estados").insert([
-    { nombre_estado: "pendiente" },
-    { nombre_estado: "revisado" },
-    { nombre_estado: "sin documento" },
+    { nombre_estado: "Pendiente" },
+    { nombre_estado: "Revisado" },
+    { nombre_estado: "Sin Archivo" },
   ]);
 }
 
