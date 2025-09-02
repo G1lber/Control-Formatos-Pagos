@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
 import api from "../services/api.js"; // 👈 aquí usas tu instancia en lugar de axios
@@ -10,9 +10,6 @@ export default function VisualizarArchivo() {
   const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`;
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
-  const [searchParams] = useSearchParams();
-  const documentoId = searchParams.get("id");
-  const [tipoArchivo, setTipoArchivo] = useState("");
 
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
@@ -37,7 +34,7 @@ export default function VisualizarArchivo() {
   const handleEnviarComentario = async () => {
     try {
       await api.post("/api/rechazo", {
-        documentoId: 123, // ⚠️ reemplazar con el ID real desde useParams
+        documentoId, 
         mensaje: comentario,
         tipoArchivo
       });
@@ -101,10 +98,7 @@ export default function VisualizarArchivo() {
           {/* Botones de acción */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
             <button 
-            onClick={() => {
-              setTipoArchivo(tipo === "gf" ? "archivo1" : "archivo2"); // según la ruta
-              setShowModal(true)
-            }}
+            onClick={() => setShowModal(true)}
             className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
               Rechazar
             </button>
