@@ -1,15 +1,18 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
-import api from "../services/api.js"; // 👈 aquí usas tu instancia en lugar de axios
+import api from "../services/api.js"; // 👈 reemplaza axios
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
   const decodedUrl = decodeURIComponent(rawFile);
 
-  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`;
+  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`; // 👈 usa .env
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const documentoId = searchParams.get("id");
+  const [tipoArchivo, setTipoArchivo] = useState("");
 
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
@@ -33,10 +36,10 @@ export default function VisualizarArchivo() {
   // Enviar comentario al backend
   const handleEnviarComentario = async () => {
     try {
-      await api.post("/api/rechazo", {
-        documentoId, 
+      await api.post("/rechazo", {
+        documentoId,
         mensaje: comentario,
-        tipoArchivo
+        tipoArchivo,
       });
 
       alert("El comentario fue enviado al correo del contratista ✅");
@@ -47,6 +50,7 @@ export default function VisualizarArchivo() {
       alert("Error enviando el correo ❌");
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}

@@ -42,7 +42,7 @@ app.use("/api/fechas", fechasRoutes);
 app.use("/api/usuarios", userRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
-app.use("/api", rechazoRoutes);
+app.use("/api/rechazo", rechazoRoutes);
 
 // nueva ruta para olvidé contraseña
 app.use("/auth", authRoutes);
