@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
 import axios from "axios";
@@ -10,6 +10,9 @@ export default function VisualizarArchivo() {
   const backendUrl = `http://localhost:4000/uploads/${decodedUrl}`;
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const documentoId = searchParams.get("id");
+  const [tipoArchivo, setTipoArchivo] = useState("");
 
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
@@ -34,8 +37,9 @@ export default function VisualizarArchivo() {
     const handleEnviarComentario = async () => {
     try {
       await axios.post("http://localhost:4000/api/rechazo", {
-        documentoId: 123, // ⚠️ este ID lo recibes desde useParams()
+        documentoId, // ⚠️ este ID lo recibes desde useParams()
         mensaje: comentario,
+        tipoArchivo
       });
 
       alert("El comentario fue enviado al correo del contratista ✅");
@@ -97,7 +101,10 @@ export default function VisualizarArchivo() {
           {/* Botones de acción */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
             <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setTipoArchivo(tipo === "gf" ? "archivo1" : "archivo2"); // según la ruta
+              setShowModal(true)
+            }}
             className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
               Rechazar
             </button>

@@ -19,11 +19,12 @@ export default function Documentos() {
   const [menuAbierto, setMenuAbierto] = useState(null);
   const [dropdownPos, setDropdownPos] = useState("down");
   const [query, setQuery] = useState("");
-  const dropdownRefs = useRef({});
 
   // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 12;
+  const dropdownRefs = useRef({}); // 👈 refs dinámicos por cada fila
+  const [tipoArchivo, setTipoArchivo] = useState("");
 
   const filtrados = documentos.filter((n) => {
     const coincideEstado =
