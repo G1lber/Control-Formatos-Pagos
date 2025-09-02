@@ -1,13 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
-import axios from "axios";
+import api from "../services/api.js"; // 👈 aquí usas tu instancia en lugar de axios
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
   const decodedUrl = decodeURIComponent(rawFile);
 
-  const backendUrl = `http://localhost:4000/uploads/${decodedUrl}`;
+  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`;
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
 
@@ -30,11 +30,11 @@ export default function VisualizarArchivo() {
     }
   }, [extension, backendUrl]);
 
-   // Enviar comentario al backend
-    const handleEnviarComentario = async () => {
+  // Enviar comentario al backend
+  const handleEnviarComentario = async () => {
     try {
-      await axios.post("http://localhost:4000/api/rechazo", {
-        documentoId: 123, // ⚠️ este ID lo recibes desde useParams()
+      await api.post("/api/rechazo", {
+        documentoId: 123, // ⚠️ reemplazar con el ID real desde useParams
         mensaje: comentario,
       });
 

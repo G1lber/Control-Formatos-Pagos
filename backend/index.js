@@ -33,7 +33,7 @@ Model.knex(knex);
 
 // ✅ Servir estáticos (documentos subidos)
 app.use(
-  "/uploads",
+  "/api/uploads",
   express.static(path.join(__dirname, "documentos-formatos"))
 );
 
