@@ -320,14 +320,18 @@ const handleActivar = async () => {
                                   } right-0 w-40 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg z-50`}
                                 >
                                   <Link
-                                    to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                                    to={`/ver/gf/${encodeURIComponent(
+                                      n.archivo1
+                                    )}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
                                   >
                                     📄 Ver GF
                                   </Link>
                                   <Link
-                                    to={`/ver/gc/${encodeURIComponent(n.archivo2)}?id=${n.id}`}
+                                    to={`/ver/gc/${encodeURIComponent(
+                                      n.archivo2
+                                    )}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-b-lg transition"
                                   >
