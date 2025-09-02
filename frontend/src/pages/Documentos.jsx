@@ -14,8 +14,10 @@ export default function Documentos() {
   const [menuAbierto, setMenuAbierto] = useState(null);
   const [query, setQuery] = useState("");
   const dropdownRefs = useRef({}); // 👈 refs dinámicos por cada fila
+  const [tipoArchivo, setTipoArchivo] = useState("");
 
-  // ⬆️ Agregar estados arriba de tu componente
+
+  //  Agregar estados arriba de tu componente
 const [paginaActual, setPaginaActual] = useState(1);
 const usuariosPorPagina = 10;
 
@@ -237,15 +239,21 @@ useEffect(() => {
                     {menuAbierto === key && (
                       <div className="absolute left-0 mt-2 w-32 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg animate-fadeIn z-20">
                         <Link
-                          to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
-                          onClick={() => setMenuAbierto(null)}
+                          to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                          onClick={() => {
+                            setTipoArchivo("archivo1");
+                            setMenuAbierto(null)
+                          }}
                           className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
                         >
                           📄 Ver GF
                         </Link>
                         <Link
-                          to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
-                          onClick={() => setMenuAbierto(null)}
+                          to={`/ver/gc/${encodeURIComponent(n.archivo2)}?id=${n.id}`}
+                          onClick={() => {
+                            setTipoArchivo("archivo2");
+                            setMenuAbierto(null)
+                          }}
                           className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-b-lg transition"
                         >
                           📄 Ver GC

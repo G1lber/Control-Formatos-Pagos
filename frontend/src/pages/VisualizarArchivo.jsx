@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
 import axios from "axios";
@@ -10,6 +10,8 @@ export default function VisualizarArchivo() {
   const backendUrl = `http://localhost:4000/uploads/${decodedUrl}`;
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const documentoId = searchParams.get("id");
 
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
@@ -34,8 +36,8 @@ export default function VisualizarArchivo() {
     const handleEnviarComentario = async () => {
     try {
       await axios.post("http://localhost:4000/api/rechazo", {
-        documentoId: 123, // ⚠️ este ID lo recibes desde useParams()
-        mensaje: comentario,
+        documentoId, // ⚠️ este ID lo recibes desde useParams()
+        mensaje: comentario
       });
 
       alert("El comentario fue enviado al correo del contratista ✅");
