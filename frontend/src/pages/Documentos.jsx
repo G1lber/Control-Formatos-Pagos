@@ -338,14 +338,14 @@ const handleActivar = async () => {
                             </>
                           ) : n.archivo1 ? (
                             <Link
-                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
                             >
                               Revisar GF
                             </Link>
                           ) : n.archivo2 ? (
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                              to={`/ver/gc/${encodeURIComponent(n.archivo2)}?id=${n.id}`}
                               className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
                             >
                               Revisar GC
@@ -459,14 +459,14 @@ const handleActivar = async () => {
                       </>
                     ) : n.archivo1 ? (
                       <Link
-                        to={`/ver/gf/${encodeURIComponent(n.archivo1)}`}
+                        to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                         className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow w-full text-center"
                       >
                         Revisar GF
                       </Link>
                     ) : n.archivo2 ? (
                       <Link
-                        to={`/ver/gc/${encodeURIComponent(n.archivo2)}`}
+                        to={`/ver/gc/${encodeURIComponent(n.archivo2)}?id=${n.id}`}
                         className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow w-full text-center"
                       >
                         Revisar GC
