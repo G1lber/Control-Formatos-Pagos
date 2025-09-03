@@ -390,7 +390,7 @@ const handleFirmaUpload = async () => {
                                   } right-0 w-40 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg z-50`}
                                 >
                                   <Link
-                                    to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                                    to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
                                   >
@@ -408,7 +408,7 @@ const handleFirmaUpload = async () => {
                             </>
                           ) : n.archivo1 ? (
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
                             >
                               Revisar GF
@@ -511,7 +511,7 @@ const handleFirmaUpload = async () => {
                             } left-0 right-0 flex flex-col gap-1 text-white font-semibold text-sm rounded-lg shadow-lg z-50`}
                           >
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               onClick={() => setMenuAbierto(null)}
                               className="px-4 py-2 rounded-t-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition text-center"
                             >
@@ -529,7 +529,7 @@ const handleFirmaUpload = async () => {
                       </>
                     ) : n.archivo1 ? (
                       <Link
-                        to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                        to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                         className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow w-full text-center"
                       >
                         Revisar GF

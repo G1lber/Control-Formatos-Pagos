@@ -54,7 +54,7 @@ router.post("/", async (req, res) => {
     );
 
     // console.log("✅ Correo enviado exitosamente");
-    // res.json({ success: true, msg: "Correo enviado correctamente ✅", destinatario: documento.correo });
+    return res.status(200).json({ success: true });
 
   } catch (error) {
     console.error("❌ Error completo:", error);
