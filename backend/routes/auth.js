@@ -37,7 +37,7 @@ router.post("/forgot-password", async (req, res) => {
 
     // envía correo
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: `"Control de Pagos Sena" <${process.env.SMTP_USER}>`,
       to: usuario.correo,                      // <<<<<< AQUÍ se usa el correo de la tabla usuarios
       subject: "Código de recuperación",
       html: `

@@ -6,7 +6,7 @@ import path from 'path';
 
 const router = express.Router();
 
-router.post("/rechazo", async (req, res) => {
+router.post("/", async (req, res) => {
   const { documentoId, mensaje, tipoArchivo} = req.body;
 
   console.log("📨 Datos recibidos:", { documentoId, mensaje, tipoArchivo});
@@ -54,7 +54,7 @@ router.post("/rechazo", async (req, res) => {
     );
 
     // console.log("✅ Correo enviado exitosamente");
-    // res.json({ success: true, msg: "Correo enviado correctamente ✅", destinatario: documento.correo });
+    return res.status(200).json({ success: true });
 
   } catch (error) {
     console.error("❌ Error completo:", error);

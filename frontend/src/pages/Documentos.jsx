@@ -23,9 +23,14 @@ export default function Documentos() {
   // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 12;
-  const dropdownRefs = useRef({}); // 👈 refs dinámicos por cada fila
+  const dropdownRefs = useRef({});
   const [tipoArchivo, setTipoArchivo] = useState("");
 
+  // 📌 Firma
+  const [firma, setFirma] = useState(null); // URL firma guardada
+  const [file, setFile] = useState(null);   // Archivo seleccionado
+
+  // 🔍 Filtro
   const filtrados = documentos.filter((n) => {
     const coincideEstado =
       filtro === "Todos" || n.estado?.nombre_estado === filtro;
@@ -38,35 +43,34 @@ export default function Documentos() {
     return coincideEstado && coincideBusqueda;
   });
 
-  // Cargar fechas del backend
-useEffect(() => {
-  const fetchFechas = async () => {
-    try {
-      const { data } = await api.get("/fechas");
-      if (data) {
-        setFechaGF(data.fechaGF ? toColombiaInputString(data.fechaGF) : "");
-        setFechaGC(data.fechaGC ? toColombiaInputString(data.fechaGC) : "");
+  // 🗓️ Cargar fechas
+  useEffect(() => {
+    const fetchFechas = async () => {
+      try {
+        const { data } = await api.get("/fechas");
+        if (data) {
+          setFechaGF(data.fechaGF ? toColombiaInputString(data.fechaGF) : "");
+          setFechaGC(data.fechaGC ? toColombiaInputString(data.fechaGC) : "");
+        }
+      } catch (err) {
+        console.error("❌ Error al cargar fechas:", err);
       }
-    } catch (err) {
-      console.error("❌ Error al cargar fechas:", err);
+    };
+    fetchFechas();
+  }, []);
+
+  const handleActivar = async () => {
+    try {
+      await api.post("/fechas", {
+        fechaGF: fechaGF ? inputColombiaToUTC(fechaGF) : null,
+        fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
+      });
+      alert("Fechas guardadas ✅");
+    } catch (error) {
+      console.error("Error guardando fechas:", error);
+      alert("❌ Error al guardar fechas");
     }
   };
-  fetchFechas();
-}, []);
-
-// Guardar en backend
-const handleActivar = async () => {
-  try {
-    await api.post("/fechas", {
-      fechaGF: fechaGF ? inputColombiaToUTC(fechaGF) : null,
-      fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
-    });
-    alert("Fechas guardadas ✅");
-  } catch (error) {
-    console.error("Error guardando fechas:", error);
-    alert("❌ Error al guardar fechas");
-  }
-};
 
   // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
@@ -80,7 +84,7 @@ const handleActivar = async () => {
     setPaginaActual(1);
   }, [filtro, query]);
 
-  // ✅ Cargar documentos
+  // 📑 Cargar documentos
   useEffect(() => {
     const cargarDatos = async () => {
       try {
@@ -93,7 +97,45 @@ const handleActivar = async () => {
     cargarDatos();
   }, []);
 
-  // ✅ Cerrar menú desplegable al hacer click afuera
+  // 📌 Cargar firma del backend
+  useEffect(() => {
+  const fetchFirma = async () => {
+    try {
+      const res = await api.get("/documentos/firma", { responseType: "blob" });
+      const imgUrl = URL.createObjectURL(res.data);
+      setFirma(imgUrl);
+    } catch (err) {
+      console.error("❌ Error al cargar firma:", err);
+    }
+  };
+  fetchFirma();
+}, []);
+
+
+  // 📌 Subir/actualizar firma
+const handleFirmaUpload = async () => {
+  if (!file) {
+    alert("⚠️ Selecciona un archivo primero");
+    return;
+  }
+  try {
+    const formData = new FormData();
+    formData.append("firma", file);
+
+    await api.post("/documentos/firma", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    alert("✅ Firma actualizada correctamente");
+    window.location.reload(); // 👈 fuerza recarga y vuelve a pedir la firma
+  } catch (err) {
+    console.error("❌ Error subiendo firma:", err);
+    alert("Error al subir firma");
+  }
+};
+
+
+  // 📌 Cerrar menú desplegable
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -120,7 +162,7 @@ const handleActivar = async () => {
       }`
     );
   };
-  // 👉 abre menú dinámico arriba o abajo segú
+
   const handleOpenMenu = (key, ref) => {
     if (menuAbierto === key) {
       setMenuAbierto(null);
@@ -178,10 +220,7 @@ const handleActivar = async () => {
             ))}
           </div>
         </CardDesplegable>
-
         {/* Ajuste de Fechas */}
-
-  
             <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,7 +245,6 @@ const handleActivar = async () => {
                   className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
                 />
               </div>
-
               <button
                 onClick={handleActivar}
                 className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
@@ -214,6 +252,38 @@ const handleActivar = async () => {
                 Activar
               </button>
             </CardDesplegable>
+           <CardDesplegable value="firma" title="Firma Digital">
+            <div className="p-4 space-y-4">
+              {firma ? (
+                <div className="flex flex-col items-center">
+                  <img
+                    src={firma}
+                    alt="Firma actual"
+                    className="h-24 object-contain border rounded-md p-2 bg-white"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Firma actual</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No tienes una firma cargada</p>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="w-full text-sm"
+              />
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleFirmaUpload}
+                  className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-4 py-2 rounded-md text-sm"
+                >
+                  {firma ? "Actualizar Firma" : "Subir Firma"}
+                </button>
+              </div>
+            </div>
+          </CardDesplegable>
       </Accordion.Root>
 
       {/* Columna derecha - Lista de Revisión */}
@@ -320,7 +390,7 @@ const handleActivar = async () => {
                                   } right-0 w-40 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg z-50`}
                                 >
                                   <Link
-                                    to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                                    to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
                                   >
@@ -338,7 +408,7 @@ const handleActivar = async () => {
                             </>
                           ) : n.archivo1 ? (
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
                             >
                               Revisar GF
@@ -441,7 +511,7 @@ const handleActivar = async () => {
                             } left-0 right-0 flex flex-col gap-1 text-white font-semibold text-sm rounded-lg shadow-lg z-50`}
                           >
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               onClick={() => setMenuAbierto(null)}
                               className="px-4 py-2 rounded-t-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition text-center"
                             >
@@ -459,7 +529,7 @@ const handleActivar = async () => {
                       </>
                     ) : n.archivo1 ? (
                       <Link
-                        to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                        to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                         className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow w-full text-center"
                       >
                         Revisar GF

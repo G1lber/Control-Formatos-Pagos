@@ -3,8 +3,10 @@ import fs from "fs";
 import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
+import { PDFDocument, rgb } from "pdf-lib";
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
+const FIRMAS_DIR = path.resolve("firma");
 
 // --- Configuración Multer ---
 const storage = multer.diskStorage({
@@ -19,6 +21,21 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+
+// Configuracion para la firma Multer
+const storageFirmas = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(FIRMAS_DIR)) {
+      fs.mkdirSync(FIRMAS_DIR, { recursive: true });
+    }
+    cb(null, FIRMAS_DIR); // <- Guarda en otra carpeta
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = "firma-" + Date.now() + path.extname(file.originalname);
+    cb(null, uniqueName); // <- Nombre final de la firma
+  },
+});
+
 
 const fileFilter = async (req, file, cb) => {
   try {
@@ -49,6 +66,88 @@ const fileFilter = async (req, file, cb) => {
 export const upload = multer({ storage, fileFilter });
 
 // --- Controladores ---
+
+// Firmar el archivo
+export const firmarDocumento = async (req, res) => {
+  try {
+    const { file } = req.body; // nombre del archivo
+    const filePath = path.resolve("documentos-formatos", file);
+    const firmaPath = path.resolve("firma", "firma.png");
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(500).json({ error: "Documento no encontrado" });
+    }
+    if (!fs.existsSync(firmaPath)) {
+      return res.status(404).json({ error: "No hay firma registrada" });
+    }
+
+    // 👉 Cargar PDF
+    const pdfBytes = fs.readFileSync(filePath);
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+
+    // 👉 Insertar firma
+    const firmaBytes = fs.readFileSync(firmaPath);
+    const firmaImage = await pdfDoc.embedPng(firmaBytes);
+
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+    firstPage.drawImage(firmaImage, {
+      x: 430,
+      y: 88,
+      width: 140,
+      height: 60,
+    });
+
+    // 👉 Guardar en el mismo archivo (sobrescribir)
+    const signedPdfBytes = await pdfDoc.save();
+    fs.writeFileSync(filePath, signedPdfBytes);
+
+    res.json({
+      message: "Documento firmado por contralor ✅",
+      url: `/documentos-formatos/${file}`, // mismo archivo actualizado
+    });
+  } catch (err) {
+    console.error("❌ Error firmando contralor:", err);
+    res.status(500).json({ error: "Error firmando documento" });
+  }
+};
+
+
+// Subir Firma
+export const subirFirma = async (req, res) => {
+  try {
+    const archivo = req.file;
+    if (!archivo) {
+      return res.status(400).json({ error: "No se envió ninguna firma" });
+    }
+
+    // Carpeta donde guardamos la firma
+    const firmaPath = path.resolve("firma", "firma.png");
+
+    // Si existe una firma previa la eliminamos
+    if (fs.existsSync(firmaPath)) {
+      fs.unlinkSync(firmaPath);
+    }
+
+    // Movemos el archivo subido al nombre fijo
+    fs.renameSync(archivo.path, firmaPath);
+
+    res.json({ mensaje: "✅ Firma actualizada", archivo: "firma.png" });
+  } catch (error) {
+    console.error("❌ Error al subir firma:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const obtenerFirma = (req, res) => {
+  const firmaPath = path.resolve("firma", "firma.png");
+
+  if (fs.existsSync(firmaPath)) {
+    res.sendFile(firmaPath);
+  } else {
+    res.status(404).json({ error: "No hay firma registrada" });
+  }
+};
 
 // 📤 Subir documento
 export const subirDocumento = async (req, res) => {

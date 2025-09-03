@@ -1,13 +1,13 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
-import axios from "axios";
+import api from "../services/api.js"; // 👈 reemplaza axios
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
   const decodedUrl = decodeURIComponent(rawFile);
 
-  const backendUrl = `http://localhost:4000/uploads/${decodedUrl}`;
+  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`; // 👈 usa .env
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
   const [searchParams] = useSearchParams();
@@ -33,13 +33,13 @@ export default function VisualizarArchivo() {
     }
   }, [extension, backendUrl]);
 
-   // Enviar comentario al backend
-    const handleEnviarComentario = async () => {
+  // Enviar comentario al backend
+  const handleEnviarComentario = async () => {
     try {
-      await axios.post("http://localhost:4000/api/rechazo", {
-        documentoId, // ⚠️ este ID lo recibes desde useParams()
+      await api.post("/rechazo", {
+        documentoId,
         mensaje: comentario,
-        tipoArchivo
+        tipoArchivo,
       });
 
       alert("El comentario fue enviado al correo del contratista ✅");
@@ -50,6 +50,25 @@ export default function VisualizarArchivo() {
       alert("Error enviando el correo ❌");
     }
   };
+  //Aprobar y Firmar
+const handleAprobar = async () => {
+  try {
+    const { data } = await api.post(
+      `${import.meta.env.VITE_API_URL}/documentos/aprobar`,
+      { file: decodedUrl }
+    );
+
+    if (data?.url) {
+      alert("✅ Documento firmado correctamente");
+
+      // 🔄 Recargar toda la página
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error("❌ Error firmando:", err);
+    alert("Error al firmar el documento");
+  }
+};
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
@@ -109,7 +128,10 @@ export default function VisualizarArchivo() {
               Rechazar
             </button>
 
-            <button className="px-4 py-2 rounded-md bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]">
+            <button
+              onClick={handleAprobar}
+              className="px-4 py-2 rounded-md bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]"
+            >
               Aprobar
             </button>
           </div>
