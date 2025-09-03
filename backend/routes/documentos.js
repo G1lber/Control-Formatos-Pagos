@@ -8,7 +8,8 @@ import {
   actualizarEstado,
   eliminarDocumento,
   subirFirma,
-  obtenerFirma
+  obtenerFirma,
+  firmarDocumento
 } from "../controllers/documentosController.js";
 import { uploadFirma } from "../middlewares/upload.js";
 const router = express.Router();
@@ -28,9 +29,13 @@ router.post(
   subirDocumento
 );
 
-router.get("/firma", obtenerFirma);
 router.post("/firma", uploadFirma.single("firma"), subirFirma);
+
+router.post("/aprobar", firmarDocumento);
+
+router.get("/firma", obtenerFirma);
 router.get("/", obtenerDocumentos);
+
 router.get("/:id", obtenerDocumentoPorId);
 router.patch("/:id/estado", actualizarEstado);
 router.delete("/:id", eliminarDocumento);

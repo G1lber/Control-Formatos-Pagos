@@ -70,46 +70,48 @@ export const upload = multer({ storage, fileFilter });
 // Firmar el archivo
 export const firmarDocumento = async (req, res) => {
   try {
-    const { filePath } = req.body; // ruta del archivo PDF que quieres firmar
+    const { file } = req.body; // nombre del archivo
+    const filePath = path.resolve("documentos-formatos", file);
     const firmaPath = path.resolve("firma", "firma.png");
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "Documento no encontrado" });
+      return res.status(500).json({ error: "Documento no encontrado" });
     }
     if (!fs.existsSync(firmaPath)) {
       return res.status(404).json({ error: "No hay firma registrada" });
     }
 
-    // 📄 Cargar PDF
-    const existingPdfBytes = fs.readFileSync(filePath);
-    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    // 👉 Cargar PDF
+    const pdfBytes = fs.readFileSync(filePath);
+    const pdfDoc = await PDFDocument.load(pdfBytes);
 
-    // 📌 Insertar imagen de firma
+    // 👉 Insertar firma
     const firmaBytes = fs.readFileSync(firmaPath);
     const firmaImage = await pdfDoc.embedPng(firmaBytes);
 
     const pages = pdfDoc.getPages();
     const firstPage = pages[0];
-
-    // 🖋 Dibujar la firma (x, y ajusta posición)
     firstPage.drawImage(firmaImage, {
-      x: 50,
-      y: 100,
-      width: 120,
-      height: 50,
+      x: 430,
+      y: 88,
+      width: 140,
+      height: 60,
     });
 
-    // Guardar nuevo PDF firmado
-    const pdfBytes = await pdfDoc.save();
-    const outputPath = path.resolve("formatos-pagos", `firmado-${Date.now()}.pdf`);
-    fs.writeFileSync(outputPath, pdfBytes);
+    // 👉 Guardar en el mismo archivo (sobrescribir)
+    const signedPdfBytes = await pdfDoc.save();
+    fs.writeFileSync(filePath, signedPdfBytes);
 
-    res.json({ message: "Documento firmado ✅", url: `/uploads/${path.basename(outputPath)}` });
+    res.json({
+      message: "Documento firmado por contralor ✅",
+      url: `/documentos-formatos/${file}`, // mismo archivo actualizado
+    });
   } catch (err) {
-    console.error("❌ Error firmando documento:", err);
+    console.error("❌ Error firmando contralor:", err);
     res.status(500).json({ error: "Error firmando documento" });
   }
 };
+
 
 // Subir Firma
 export const subirFirma = async (req, res) => {

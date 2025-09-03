@@ -50,7 +50,25 @@ export default function VisualizarArchivo() {
       alert("Error enviando el correo ❌");
     }
   };
+  //Aprobar y Firmar
+const handleAprobar = async () => {
+  try {
+    const { data } = await api.post(
+      `${import.meta.env.VITE_API_URL}/documentos/aprobar`,
+      { file: decodedUrl }
+    );
 
+    if (data?.url) {
+      alert("✅ Documento firmado correctamente");
+
+      // 🔄 Recargar toda la página
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error("❌ Error firmando:", err);
+    alert("Error al firmar el documento");
+  }
+};
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
@@ -110,7 +128,10 @@ export default function VisualizarArchivo() {
               Rechazar
             </button>
 
-            <button className="px-4 py-2 rounded-md bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]">
+            <button
+              onClick={handleAprobar}
+              className="px-4 py-2 rounded-md bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]"
+            >
               Aprobar
             </button>
           </div>
