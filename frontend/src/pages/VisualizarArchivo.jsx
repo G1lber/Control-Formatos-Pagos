@@ -14,6 +14,9 @@ export default function VisualizarArchivo() {
   const documentoId = searchParams.get("id");
   const [tipoArchivo, setTipoArchivo] = useState("");
 
+  const [modoFirma, setModoFirma] = useState(false);
+  const [posicionFirma, setPosicionFirma] = useState(null);
+
   // Estado para modal y comentario
   const [showModal, setShowModal] = useState(false);
   const [comentario, setComentario] = useState("");
@@ -51,17 +54,55 @@ export default function VisualizarArchivo() {
     }
   };
   //Aprobar y Firmar
+const marcarFirma = (pIndex) => {
+  const paragraphs = docxContainerRef.current.querySelectorAll("p");
+
+  // limpiar marcas previas
+  paragraphs.forEach((p) => p.classList.remove("firma-seleccionada"));
+
+  // marcar nuevo párrafo
+  if (pIndex !== null && paragraphs[pIndex]) {
+    paragraphs[pIndex].classList.add("firma-seleccionada");
+  }
+};
+
+const handleClickDoc = (e) => {
+  if (!modoFirma) return; // 🚫 ignorar si no está en modo firma
+
+  const p = e.target.closest("p");
+  if (!p) return;
+
+  const paragraphs = Array.from(docxContainerRef.current.querySelectorAll("p"));
+  const pIndex = paragraphs.indexOf(p);
+
+  setPosicionFirma(pIndex);
+  setModoFirma(false);
+  marcarFirma(pIndex);
+
+  alert(`Firma seleccionada en el párrafo ${pIndex + 1}. Ahora confirma con "Aprobar" ✅`);
+};
+
 const handleAprobar = async () => {
+  if (tipo === "gc" && posicionFirma === null) {
+    // 🔹 activar modo firma primero
+    setModoFirma(true);
+    alert("👉 Haz clic en el párrafo donde irá la firma");
+    return;
+  }
+
   try {
-    const { data } = await api.post(
-      `${import.meta.env.VITE_API_URL}/documentos/aprobar`,
-      { file: decodedUrl }
-    );
+    let endpoint =
+      tipo === "gf"
+        ? `${import.meta.env.VITE_API_URL}/documentos/aprobar`
+        : `${import.meta.env.VITE_API_URL}/documentos/firmar-word`;
+
+    const { data } = await api.post(endpoint, {
+      file: decodedUrl,
+      posicion: posicionFirma, // se envía solo si es gc
+    });
 
     if (data?.url) {
       alert("✅ Documento firmado correctamente");
-
-      // 🔄 Recargar toda la página
       window.location.reload();
     }
   } catch (err) {
@@ -108,7 +149,10 @@ const handleAprobar = async () => {
             ) : extension === "docx" ? (
               <div
                 ref={docxContainerRef}
-                className="docx-container w-full h-[75vh] overflow-auto"
+                className={`docx-container w-full h-[75vh] overflow-auto ${
+                  modoFirma ? "cursor-crosshair" : "cursor-default"
+                }`}
+                onClick={handleClickDoc}
               />
             ) : (
               <p className="text-center p-5 text-gray-500">

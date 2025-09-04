@@ -4,6 +4,9 @@ import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 import { PDFDocument, rgb } from "pdf-lib";
+import mammoth from "mammoth";
+import puppeteer from "puppeteer";
+
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
 const FIRMAS_DIR = path.resolve("firma");
@@ -67,7 +70,62 @@ export const upload = multer({ storage, fileFilter });
 
 // --- Controladores ---
 
-// Firmar el archivo
+//Firmar Word
+export const firmarWord = async (req, res) => {
+  try {
+    const { file, x, y, page = 0 } = req.body; // coordenadas desde frontend
+    const filePath = path.resolve("documentos-formatos", file);
+    const firmaPath = path.resolve("firma", "firma.png");
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(500).json({ error: "Documento no encontrado" });
+    }
+    if (!fs.existsSync(firmaPath)) {
+      return res.status(505).json({ error: "No hay firma registrada" });
+    }
+
+    // 1️⃣ Convertir DOCX → HTML
+    const docBuffer = fs.readFileSync(filePath);
+    const { value: html } = await mammoth.convertToHtml({ buffer: docBuffer });
+
+    // 2️⃣ Renderizar HTML en PDF con Puppeteer
+    const browser = await puppeteer.launch();
+    const pageInstance = await browser.newPage();
+    await pageInstance.setContent(html);
+    const tempPdfPath = path.resolve("documentos-formatos", `temp-${Date.now()}.pdf`);
+    await pageInstance.pdf({ path: tempPdfPath, format: "A4" });
+    await browser.close();
+
+    // 3️⃣ Insertar firma en PDF
+    const pdfDoc = await PDFDocument.load(fs.readFileSync(tempPdfPath));
+    const firmaImage = await pdfDoc.embedPng(fs.readFileSync(firmaPath));
+    const pages = pdfDoc.getPages();
+    const targetPage = pages[page]; // por defecto primera página
+    targetPage.drawImage(firmaImage, {
+      x: Number(x), // coordenadas enviadas por frontend
+      y: Number(y),
+      width: 120,
+      height: 50,
+    });
+
+    // 4️⃣ Guardar PDF final
+    const outputName = `firmado-${Date.now()}.pdf`;
+    const outputPath = path.resolve("documentos-formatos", outputName);
+    fs.writeFileSync(outputPath, await pdfDoc.save());
+
+    // 5️⃣ Respuesta al cliente
+    res.json({
+      message: "Documento firmado ✅",
+      url: `/documentos-formatos/${outputName}`,
+    });
+  } catch (err) {
+    console.error("❌ Error firmando:", err);
+    res.status(500).json({ error: "Error firmando documento" });
+  }
+};
+
+
+// Firmar el archivo PDF
 export const firmarDocumento = async (req, res) => {
   try {
     const { file } = req.body; // nombre del archivo

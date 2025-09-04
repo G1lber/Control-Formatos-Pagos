@@ -9,7 +9,8 @@ import {
   eliminarDocumento,
   subirFirma,
   obtenerFirma,
-  firmarDocumento
+  firmarDocumento,
+  firmarWord
 } from "../controllers/documentosController.js";
 import { uploadFirma } from "../middlewares/upload.js";
 const router = express.Router();
@@ -29,6 +30,7 @@ router.post(
   subirDocumento
 );
 
+router.post("/firmar-word", firmarWord);
 router.post("/firma", uploadFirma.single("firma"), subirFirma);
 
 router.post("/aprobar", firmarDocumento);
