@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   const { documentoId, mensaje, tipoArchivo} = req.body;
 
-  console.log("📨 Datos recibidos:", { documentoId, mensaje, tipoArchivo});
+  // console.log("📨 Datos recibidos:", { documentoId, mensaje, tipoArchivo});
 
   if (!documentoId || !mensaje || !tipoArchivo) {
     return res.status(400).json({ 
@@ -17,7 +17,7 @@ router.post("/", async (req, res) => {
       detalles: { documentoId, mensaje, tipoArchivo}
     });
   }
-
+  
   try {
     const documento = await db("documentos")
       .join("usuarios", "documentos.usuario", "usuarios.id")
@@ -36,7 +36,7 @@ router.post("/", async (req, res) => {
     else archivoSeleccionado = "archivo desconocido";
 
 
-    console.log("📧 Enviando correo a:", documento.correo);
+    // console.log("📧 Enviando correo a:", documento.correo);
 
     const emailHtml = `
     <div style="font-family: Arial, sans-serif; color: #333;">

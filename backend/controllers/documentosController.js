@@ -4,6 +4,8 @@ import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 import { PDFDocument, rgb } from "pdf-lib";
+import { sendMail } from "../config/mailer.js"
+
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
 const FIRMAS_DIR = path.resolve("firma");
@@ -69,28 +71,29 @@ export const upload = multer({ storage, fileFilter });
 
 // Firmar el archivo
 export const firmarDocumento = async (req, res) => {
+  let filePath;
+  let firmaPath;
   try {
-    const { file } = req.body; // nombre del archivo
-    const filePath = path.resolve("documentos-formatos", file);
+    const { file, documentoId } = req.body; // nombre del archivo
+    const filePath = path.resolve("documentos-formatos", file); 
     const firmaPath = path.resolve("firma", "firma.png");
 
+    // Validar existencia de archivos
     if (!fs.existsSync(filePath)) {
-      return res.status(500).json({ error: "Documento no encontrado" });
+      return res.status(404).json({ error: "Documento no encontrado" });
     }
     if (!fs.existsSync(firmaPath)) {
       return res.status(404).json({ error: "No hay firma registrada" });
     }
 
-    // 👉 Cargar PDF
+    // Cargar PDF y firma
     const pdfBytes = fs.readFileSync(filePath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
-
-    // 👉 Insertar firma
     const firmaBytes = fs.readFileSync(firmaPath);
     const firmaImage = await pdfDoc.embedPng(firmaBytes);
 
-    const pages = pdfDoc.getPages();
-    const firstPage = pages[0];
+    // Insertar firma en la primera página
+    const firstPage = pdfDoc.getPages()[0];
     firstPage.drawImage(firmaImage, {
       x: 430,
       y: 88,
@@ -98,17 +101,43 @@ export const firmarDocumento = async (req, res) => {
       height: 60,
     });
 
-    // 👉 Guardar en el mismo archivo (sobrescribir)
+    // Guardar el archivo firmado
     const signedPdfBytes = await pdfDoc.save();
     fs.writeFileSync(filePath, signedPdfBytes);
 
+  // ⚡️ Responder rápido al frontend
     res.json({
-      message: "Documento firmado por contralor ✅",
-      url: `/documentos-formatos/${file}`, // mismo archivo actualizado
+      message: "Documento firmado correctamente ✅",
+      url: `/documentos-formatos/${file}`,
     });
+
+    // --- 📩 Enviar correo en segundo plano ---
+    (async () => {
+      try {
+        const documento = await Documentos.query()
+          .findById(documentoId)
+          .withGraphFetched("usuarioRef");
+
+        if (documento && documento.usuarioRef?.correo) {
+          await sendMail(
+            documento.usuarioRef.correo,
+            "✅ Documento aprobado",
+            `Su documento ${file} ha sido aprobado y firmado correctamente.`,
+            [
+              {
+                filename: file,
+                path: filePath,
+              },
+            ]
+          );
+        }
+      } catch (err) {
+        console.error("❌ Error enviando correo en segundo plano:", err);
+      }
+    })();
   } catch (err) {
-    console.error("❌ Error firmando contralor:", err);
-    res.status(500).json({ error: "Error firmando documento" });
+    console.error("❌ Error en firmarDocumento:", err);
+    res.status(500).json({ error: "Error procesando la firma del documento" });
   }
 };
 

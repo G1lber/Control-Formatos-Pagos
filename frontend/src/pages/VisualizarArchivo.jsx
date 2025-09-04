@@ -2,6 +2,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { renderAsync } from "docx-preview";
 import api from "../services/api.js"; // 👈 reemplaza axios
+import AlertaModal from "../components/AlertaModal.jsx";
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
@@ -18,9 +19,28 @@ export default function VisualizarArchivo() {
   const [showModal, setShowModal] = useState(false);
   const [comentario, setComentario] = useState("");
 
+  const [alerta, setAlerta] = useState({
+    isOpen: false,
+    tipo: "info",
+    mensaje: "",
+  });
+
+  const mostrarAlerta = (tipo, mensaje) => {
+    setAlerta({ isOpen: true, tipo, mensaje });
+  };
   // Detectar extensión real del archivo
   const extension = decodedUrl.split(".").pop().toLowerCase();
 
+   useEffect(() => {
+    if (alerta.isOpen) {
+      const tiempo = alerta.tipo === "success" ? 3000 : 5000; // ms
+      const timer = setTimeout(() => {
+        setAlerta((prev) => ({ ...prev, isOpen: false }));
+      }, tiempo);
+
+      return () => clearTimeout(timer);
+    }
+  }, [alerta]);
   // Renderizar DOCX con docx-preview
   useEffect(() => {
     if (extension === "docx") {
@@ -42,12 +62,12 @@ export default function VisualizarArchivo() {
         tipoArchivo,
       });
 
-      alert("El comentario fue enviado al correo del contratista ✅");
+      mostrarAlerta("success","El comentario fue enviado al correo del contratista");
       setShowModal(false);
       setComentario("");
     } catch (error) {
       console.error(error);
-      alert("Error enviando el correo ❌");
+      mostrarAlerta("error","Error enviando el correo ❌");
     }
   };
   //Aprobar y Firmar
@@ -55,14 +75,14 @@ const handleAprobar = async () => {
   try {
     const { data } = await api.post(
       `${import.meta.env.VITE_API_URL}/documentos/aprobar`,
-      { file: decodedUrl }
+      { file: decodedUrl, documentoId }
     );
 
     if (data?.url) {
       alert("✅ Documento firmado correctamente");
 
       // 🔄 Recargar toda la página
-      window.location.reload();
+      navigate("/documentos");
     }
   } catch (err) {
     console.error("❌ Error firmando:", err);
@@ -166,6 +186,13 @@ const handleAprobar = async () => {
           </div>
         </div>
       )}
+      {/* 🔹 Modal de alertas */}
+            <AlertaModal
+              isOpen={alerta.isOpen}
+              tipo={alerta.tipo}
+              mensaje={alerta.mensaje}
+              onClose={() => setAlerta({ ...alerta, isOpen: false })}
+            />
     </div>
   );
 }
