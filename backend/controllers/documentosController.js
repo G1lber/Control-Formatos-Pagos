@@ -4,8 +4,11 @@ import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 import { PDFDocument, rgb } from "pdf-lib";
-import mammoth from "mammoth";
-import puppeteer from "puppeteer";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
+import ImageModule from "docxtemplater-image-module-free";
+import * as cheerio from "cheerio";
+
 
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
@@ -70,57 +73,106 @@ export const upload = multer({ storage, fileFilter });
 
 // --- Controladores ---
 
-//Firmar Word
-export const firmarWord = async (req, res) => {
+// Insertar Marcador de donde ira la firma
+export const insertarMarcadorFirma = async (req, res) => {
   try {
-    const { file, x, y, page = 0 } = req.body; // coordenadas desde frontend
+    const { file, posicion } = req.body;
     const filePath = path.resolve("documentos-formatos", file);
-    const firmaPath = path.resolve("firma", "firma.png");
 
     if (!fs.existsSync(filePath)) {
-      return res.status(500).json({ error: "Documento no encontrado" });
-    }
-    if (!fs.existsSync(firmaPath)) {
-      return res.status(505).json({ error: "No hay firma registrada" });
+      return res.status(404).json({ error: "Documento no encontrado" });
     }
 
-    // 1️⃣ Convertir DOCX → HTML
-    const docBuffer = fs.readFileSync(filePath);
-    const { value: html } = await mammoth.convertToHtml({ buffer: docBuffer });
+    const content = fs.readFileSync(filePath, "binary");
+    const zip = new PizZip(content);
 
-    // 2️⃣ Renderizar HTML en PDF con Puppeteer
-    const browser = await puppeteer.launch();
-    const pageInstance = await browser.newPage();
-    await pageInstance.setContent(html);
-    const tempPdfPath = path.resolve("documentos-formatos", `temp-${Date.now()}.pdf`);
-    await pageInstance.pdf({ path: tempPdfPath, format: "A4" });
-    await browser.close();
+    // Obtener XML principal
+    const xml = zip.file("word/document.xml").asText();
+    const $ = cheerio.load(xml, { xmlMode: true });
 
-    // 3️⃣ Insertar firma en PDF
-    const pdfDoc = await PDFDocument.load(fs.readFileSync(tempPdfPath));
-    const firmaImage = await pdfDoc.embedPng(fs.readFileSync(firmaPath));
-    const pages = pdfDoc.getPages();
-    const targetPage = pages[page]; // por defecto primera página
-    targetPage.drawImage(firmaImage, {
-      x: Number(x), // coordenadas enviadas por frontend
-      y: Number(y),
-      width: 120,
-      height: 50,
+    const paragraphs = $("w\\:p");
+    let idx = Number(posicion);
+
+    if (!Number.isInteger(idx) || idx < 0 || idx >= paragraphs.length) {
+      idx = paragraphs.length - 1;
+    }
+
+    // Insertamos el marcador {firma} en ese párrafo
+    const newParagraph = `
+      <w:p>
+        <w:r>
+          <w:t>{firma}</w:t>
+        </w:r>
+      </w:p>
+    `;
+
+    // Insertamos después del párrafo seleccionado
+    $(paragraphs[idx]).after(newParagraph);
+
+    // Guardar XML de vuelta en el zip
+    zip.file("word/document.xml", $.xml());
+
+    const buffer = zip.generate({
+      type: "nodebuffer",
+      compression: "DEFLATE",
     });
 
-    // 4️⃣ Guardar PDF final
-    const outputName = `firmado-${Date.now()}.pdf`;
-    const outputPath = path.resolve("documentos-formatos", outputName);
-    fs.writeFileSync(outputPath, await pdfDoc.save());
+    fs.writeFileSync(filePath, buffer);
 
-    // 5️⃣ Respuesta al cliente
-    res.json({
+    return res.json({ message: "Marcador {firma} insertado ✅" });
+  } catch (err) {
+    console.error("❌ Error insertando marcador:", err);
+    return res.status(500).json({ error: "Error insertando marcador" });
+  }
+};
+
+//Firmar Word
+function getImageModule() {
+  return new ImageModule({
+    centered: true,
+    getImage: function (tagValue) {
+      // Devuelve el binario de la imagen (firma)
+      return fs.readFileSync(tagValue);
+    },
+    getSize: function () {
+      // Tamaño de la firma en el documento (px)
+      return [150, 50];
+    },
+  });
+}
+
+export const firmarWord = async (req, res) => {
+  try {
+    const { file } = req.body; // Ruta del Word que quieres firmar
+    const filePath = path.resolve("documentos-formatos", file);
+
+    // Cargar el documento existente
+    const content = fs.readFileSync(filePath, "binary");
+    const zip = new PizZip(content);
+
+    // Crear instancia de Docxtemplater con soporte de imágenes
+    const doc = new Docxtemplater(zip, {
+      modules: [getImageModule()],
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    // Reemplazar {firma} en el Word por la imagen de la firma
+    doc.render({
+      firma: path.resolve("backend/firma/firma.png"),
+    });
+
+    // Generar el nuevo documento firmado (puedes sobrescribir o guardar con otro nombre)
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+    fs.writeFileSync(filePath, buffer); // 🔹 aquí sobrescribe el archivo original
+
+    return res.json({
       message: "Documento firmado ✅",
-      url: `/documentos-formatos/${outputName}`,
+      url: `/documentos-formatos/${file}`,
     });
   } catch (err) {
     console.error("❌ Error firmando:", err);
-    res.status(500).json({ error: "Error firmando documento" });
+    return res.status(500).json({ error: "Error firmando documento" });
   }
 };
 

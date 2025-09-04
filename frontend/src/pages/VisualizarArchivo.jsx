@@ -7,7 +7,7 @@ export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
   const decodedUrl = decodeURIComponent(rawFile);
 
-  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`; // 👈 usa .env
+  const backendUrl = `${import.meta.env.VITE_API_URL}/uploads/${decodedUrl}`;
   const navigate = useNavigate();
   const docxContainerRef = useRef(null);
   const [searchParams] = useSearchParams();
@@ -53,68 +53,83 @@ export default function VisualizarArchivo() {
       alert("Error enviando el correo ❌");
     }
   };
-  //Aprobar y Firmar
-const marcarFirma = (pIndex) => {
-  const paragraphs = docxContainerRef.current.querySelectorAll("p");
 
-  // limpiar marcas previas
-  paragraphs.forEach((p) => p.classList.remove("firma-seleccionada"));
+  // 🔹 Marcar párrafo visualmente
+  const marcarFirma = (pIndex) => {
+    const paragraphs = docxContainerRef.current.querySelectorAll("p");
 
-  // marcar nuevo párrafo
-  if (pIndex !== null && paragraphs[pIndex]) {
-    paragraphs[pIndex].classList.add("firma-seleccionada");
-  }
-};
+    // limpiar marcas previas
+    paragraphs.forEach((p) => p.classList.remove("firma-seleccionada"));
 
-const handleClickDoc = (e) => {
-  if (!modoFirma) return; // 🚫 ignorar si no está en modo firma
-
-  const p = e.target.closest("p");
-  if (!p) return;
-
-  const paragraphs = Array.from(docxContainerRef.current.querySelectorAll("p"));
-  const pIndex = paragraphs.indexOf(p);
-
-  setPosicionFirma(pIndex);
-  setModoFirma(false);
-  marcarFirma(pIndex);
-
-  alert(`Firma seleccionada en el párrafo ${pIndex + 1}. Ahora confirma con "Aprobar" ✅`);
-};
-
-const handleAprobar = async () => {
-  if (tipo === "gc" && posicionFirma === null) {
-    // 🔹 activar modo firma primero
-    setModoFirma(true);
-    alert("👉 Haz clic en el párrafo donde irá la firma");
-    return;
-  }
-
-  try {
-    let endpoint =
-      tipo === "gf"
-        ? `${import.meta.env.VITE_API_URL}/documentos/aprobar`
-        : `${import.meta.env.VITE_API_URL}/documentos/firmar-word`;
-
-    const { data } = await api.post(endpoint, {
-      file: decodedUrl,
-      posicion: posicionFirma, // se envía solo si es gc
-    });
-
-    if (data?.url) {
-      alert("✅ Documento firmado correctamente");
-      window.location.reload();
+    // marcar nuevo párrafo
+    if (pIndex !== null && paragraphs[pIndex]) {
+      paragraphs[pIndex].classList.add("firma-seleccionada");
     }
-  } catch (err) {
-    console.error("❌ Error firmando:", err);
-    alert("Error al firmar el documento");
-  }
-};
+  };
+
+  // 🔹 Cuando el usuario hace clic en un párrafo
+  const handleClickDoc = async (e) => {
+    if (!modoFirma) return;
+
+    const p = e.target.closest("p");
+    if (!p) return;
+
+    const paragraphs = Array.from(
+      docxContainerRef.current.querySelectorAll("p")
+    );
+    const pIndex = paragraphs.indexOf(p);
+
+    setPosicionFirma(pIndex);
+    setModoFirma(false);
+    marcarFirma(pIndex);
+
+    // 👉 Llamar al backend para insertar el marcador {firma}
+    try {
+      await api.post("/documentos/insertar-marcador", {
+        file: decodedUrl,
+        posicion: pIndex,
+      });
+
+      alert(`📍 Marcador {firma} insertado en el párrafo ${pIndex + 1}`);
+    } catch (err) {
+      console.error("❌ Error insertando marcador:", err);
+      alert("Error insertando marcador en el documento");
+    }
+  };
+
+  // 🔹 Aprobar y firmar
+  const handleAprobar = async () => {
+    if (tipo === "gc" && posicionFirma === null) {
+      setModoFirma(true);
+      alert("👉 Haz clic en el párrafo donde irá la firma");
+      return;
+    }
+
+    try {
+      let endpoint =
+        tipo === "gf"
+          ? `${import.meta.env.VITE_API_URL}/documentos/aprobar`
+          : `${import.meta.env.VITE_API_URL}/documentos/firmar-word`;
+
+      const { data } = await api.post(endpoint, {
+        file: decodedUrl,
+        posicion: posicionFirma,
+      });
+
+      if (data?.url) {
+        alert("✅ Documento firmado correctamente");
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("❌ Error firmando:", err);
+      alert("Error al firmar el documento");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
       <header className="flex justify-between items-center px-8 py-5 shadow-md bg-white">
-        {/* Logo + Título */}
         <div className="flex items-center gap-3">
           <img
             src="/img/sena-logo.png"
@@ -126,19 +141,17 @@ const handleAprobar = async () => {
           </h1>
         </div>
 
-        {/* Botón volver */}
         <button
-          onClick={() => navigate(-1)} 
+          onClick={() => navigate(-1)}
           className="bg-[var(--color-principal)] text-white px-4 py-2 rounded-md hover:bg-[var(--color-hover)]"
         >
           Volver
         </button>
       </header>
 
-      {/* Contenido centrado */}
+      {/* Contenido */}
       <main className="flex-1 flex justify-center items-center p-7">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-5xl flex flex-col overflow-hidden">
-          {/* Documento */}
           <div className="flex-1 overflow-auto">
             {extension === "pdf" ? (
               <iframe
@@ -161,14 +174,15 @@ const handleAprobar = async () => {
             )}
           </div>
 
-          {/* Botones de acción */}
+          {/* Botones */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
-            <button 
-            onClick={() => {
-              setTipoArchivo(tipo === "gf" ? "archivo1" : "archivo2"); // según la ruta
-              setShowModal(true)
-            }}
-            className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
+            <button
+              onClick={() => {
+                setTipoArchivo(tipo === "gf" ? "archivo1" : "archivo2");
+                setShowModal(true);
+              }}
+              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+            >
               Rechazar
             </button>
 
@@ -182,7 +196,7 @@ const handleAprobar = async () => {
         </div>
       </main>
 
-      {/* Modal para comentario */}
+      {/* Modal rechazo */}
       {showModal && (
         <div className="fixed inset-0 bg-[var(--color-sombra)] bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
