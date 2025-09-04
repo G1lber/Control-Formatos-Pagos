@@ -98,16 +98,13 @@ export const insertarMarcadorFirma = async (req, res) => {
     }
 
     // Insertamos el marcador {firma} en ese párrafo
-    const newParagraph = `
-      <w:p>
-        <w:r>
-          <w:t>{firma}</w:t>
-        </w:r>
-      </w:p>
+    const newRun = `
+      <w:r>
+        <w:t xml:space="preserve">{%firma}</w:t>
+      </w:r>
     `;
 
-    // Insertamos después del párrafo seleccionado
-    $(paragraphs[idx]).after(newParagraph);
+    $(paragraphs[idx]).append(newRun);
 
     // Guardar XML de vuelta en el zip
     zip.file("word/document.xml", $.xml());
@@ -130,48 +127,49 @@ export const insertarMarcadorFirma = async (req, res) => {
 function getImageModule() {
   return new ImageModule({
     centered: true,
-    getImage: function (tagValue) {
-      // Devuelve el binario de la imagen (firma)
+    getImage: (tagValue) => {
+      // tagValue = la ruta que pasas en doc.render()
       return fs.readFileSync(tagValue);
     },
-    getSize: function () {
-      // Tamaño de la firma en el documento (px)
-      return [150, 50];
+    getSize: () => {
+      return [150, 50]; // ancho, alto en px
     },
   });
 }
 
 export const firmarWord = async (req, res) => {
   try {
-    const { file } = req.body; // Ruta del Word que quieres firmar
+    const { file } = req.body;
     const filePath = path.resolve("documentos-formatos", file);
+    const firmaPath = path.resolve("firma", "firma.png");
 
-    // Cargar el documento existente
     const content = fs.readFileSync(filePath, "binary");
     const zip = new PizZip(content);
 
-    // Crear instancia de Docxtemplater con soporte de imágenes
+    // 🔹 Configuración del módulo de imágenes
+    const imageModule = new ImageModule({
+      getImage: (tagValue) => fs.readFileSync(tagValue),
+      getSize: () => [150, 50], // ancho, alto en px
+    });
+
     const doc = new Docxtemplater(zip, {
-      modules: [getImageModule()],
-      paragraphLoop: true,
-      linebreaks: true,
+      modules: [imageModule],
     });
 
-    // Reemplazar {firma} en el Word por la imagen de la firma
+    // 🔹 Pasar la ruta de la firma
     doc.render({
-      firma: path.resolve("backend/firma/firma.png"),
+      firma: firmaPath,
     });
 
-    // Generar el nuevo documento firmado (puedes sobrescribir o guardar con otro nombre)
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
-    fs.writeFileSync(filePath, buffer); // 🔹 aquí sobrescribe el archivo original
+    fs.writeFileSync(filePath, buffer);
 
     return res.json({
-      message: "Documento firmado ✅",
+      message: "✅ Documento firmado correctamente",
       url: `/documentos-formatos/${file}`,
     });
   } catch (err) {
-    console.error("❌ Error firmando:", err);
+    console.error("❌ Error firmando documento:", err);
     return res.status(500).json({ error: "Error firmando documento" });
   }
 };
