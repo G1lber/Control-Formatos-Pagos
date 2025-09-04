@@ -5,6 +5,11 @@ import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 import { PDFDocument, rgb } from "pdf-lib";
 import { sendMail } from "../config/mailer.js"
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
+import ImageModule from "docxtemplater-image-module-free";
+import * as cheerio from "cheerio";
+
 
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
@@ -69,7 +74,109 @@ export const upload = multer({ storage, fileFilter });
 
 // --- Controladores ---
 
-// Firmar el archivo
+// Insertar Marcador de donde ira la firma
+export const insertarMarcadorFirma = async (req, res) => {
+  try {
+    const { file, posicion } = req.body;
+    const filePath = path.resolve("documentos-formatos", file);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "Documento no encontrado" });
+    }
+
+    const content = fs.readFileSync(filePath, "binary");
+    const zip = new PizZip(content);
+
+    // Obtener XML principal
+    const xml = zip.file("word/document.xml").asText();
+    const $ = cheerio.load(xml, { xmlMode: true });
+
+    const paragraphs = $("w\\:p");
+    let idx = Number(posicion);
+
+    if (!Number.isInteger(idx) || idx < 0 || idx >= paragraphs.length) {
+      idx = paragraphs.length - 1;
+    }
+
+    // Insertamos el marcador {firma} en ese párrafo
+    const newRun = `
+      <w:r>
+        <w:t xml:space="preserve">{%firma}</w:t>
+      </w:r>
+    `;
+
+    $(paragraphs[idx]).append(newRun);
+
+    // Guardar XML de vuelta en el zip
+    zip.file("word/document.xml", $.xml());
+
+    const buffer = zip.generate({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+    });
+
+    fs.writeFileSync(filePath, buffer);
+
+    return res.json({ message: "Marcador {firma} insertado ✅" });
+  } catch (err) {
+    console.error("❌ Error insertando marcador:", err);
+    return res.status(500).json({ error: "Error insertando marcador" });
+  }
+};
+
+//Firmar Word
+function getImageModule() {
+  return new ImageModule({
+    centered: true,
+    getImage: (tagValue) => {
+      // tagValue = la ruta que pasas en doc.render()
+      return fs.readFileSync(tagValue);
+    },
+    getSize: () => {
+      return [150, 50]; // ancho, alto en px
+    },
+  });
+}
+
+export const firmarWord = async (req, res) => {
+  try {
+    const { file } = req.body;
+    const filePath = path.resolve("documentos-formatos", file);
+    const firmaPath = path.resolve("firma", "firma.png");
+
+    const content = fs.readFileSync(filePath, "binary");
+    const zip = new PizZip(content);
+
+    // 🔹 Configuración del módulo de imágenes
+    const imageModule = new ImageModule({
+      getImage: (tagValue) => fs.readFileSync(tagValue),
+      getSize: () => [150, 50], // ancho, alto en px
+    });
+
+    const doc = new Docxtemplater(zip, {
+      modules: [imageModule],
+    });
+
+    // 🔹 Pasar la ruta de la firma
+    doc.render({
+      firma: firmaPath,
+    });
+
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+    fs.writeFileSync(filePath, buffer);
+
+    return res.json({
+      message: "✅ Documento firmado correctamente",
+      url: `/documentos-formatos/${file}`,
+    });
+  } catch (err) {
+    console.error("❌ Error firmando documento:", err);
+    return res.status(500).json({ error: "Error firmando documento" });
+  }
+};
+
+
+// Firmar el archivo PDF
 export const firmarDocumento = async (req, res) => {
   let filePath;
   let firmaPath;
