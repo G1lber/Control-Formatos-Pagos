@@ -133,12 +133,13 @@ export default function VisualizarArchivo() {
 
       const { data } = await api.post(endpoint, {
         file: decodedUrl,
+        documentoId,
         posicion: posicionFirma,
       });
 
       if (data?.url) {
         alert("✅ Documento firmado correctamente");
-        window.location.reload();
+        navigate("/documentos");
       }
     } catch (err) {
       console.error("❌ Error firmando:", err);

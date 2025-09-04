@@ -9,6 +9,7 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
 import * as cheerio from "cheerio";
+import sharp from "sharp";
 
 
 
@@ -182,8 +183,8 @@ export const firmarDocumento = async (req, res) => {
   let firmaPath;
   try {
     const { file, documentoId } = req.body; // nombre del archivo
-    const filePath = path.resolve("documentos-formatos", file); 
-    const firmaPath = path.resolve("firma", "firma.png");
+    filePath = path.resolve("documentos-formatos", file);
+    firmaPath = path.resolve("firma", "firma.png");
 
     // Validar existencia de archivos
     if (!fs.existsSync(filePath)) {
@@ -193,32 +194,41 @@ export const firmarDocumento = async (req, res) => {
       return res.status(404).json({ error: "No hay firma registrada" });
     }
 
-    // Cargar PDF y firma
+    // --- Cargar PDF ---
     const pdfBytes = fs.readFileSync(filePath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
-    const firmaBytes = fs.readFileSync(firmaPath);
-    const firmaImage = await pdfDoc.embedPng(firmaBytes);
 
+    // --- Cargar firma ---
+    const firmaBytes = fs.readFileSync(firmaPath);
+    let firmaImage;
+
+    if (firmaPath.endsWith(".png")) {
+      firmaImage = await pdfDoc.embedPng(firmaBytes);
+    } else if (firmaPath.endsWith(".jpg") || firmaPath.endsWith(".jpeg")) {
+      firmaImage = await pdfDoc.embedJpg(firmaBytes);
+    } else {
+      throw new Error("La firma debe ser PNG o JPG");
+    }
     // Insertar firma en la primera página
     const firstPage = pdfDoc.getPages()[0];
     firstPage.drawImage(firmaImage, {
-      x: 430,
-      y: 88,
-      width: 140,
-      height: 60,
+      x: 460,
+      y: 110,
+      width: 100,
+      height: 25,
     });
 
-    // Guardar el archivo firmado
+    // Guardar el PDF firmado
     const signedPdfBytes = await pdfDoc.save();
     fs.writeFileSync(filePath, signedPdfBytes);
 
-  // ⚡️ Responder rápido al frontend
+    // Responder rápido al frontend
     res.json({
       message: "Documento firmado correctamente ✅",
       url: `/documentos-formatos/${file}`,
     });
 
-    // --- 📩 Enviar correo en segundo plano ---
+    // --- Enviar correo en segundo plano ---
     (async () => {
       try {
         const documento = await Documentos.query()
@@ -258,22 +268,29 @@ export const subirFirma = async (req, res) => {
     }
 
     // Carpeta donde guardamos la firma
-    const firmaPath = path.resolve("firma", "firma.png");
+    const firmaDir = path.resolve("firma");
+    if (!fs.existsSync(firmaDir)) fs.mkdirSync(firmaDir, { recursive: true });
 
-    // Si existe una firma previa la eliminamos
-    if (fs.existsSync(firmaPath)) {
-      fs.unlinkSync(firmaPath);
-    }
+    const firmaPath = path.join(firmaDir, "firma.png");
 
-    // Movemos el archivo subido al nombre fijo
-    fs.renameSync(archivo.path, firmaPath);
+    // Eliminar firma previa
+    if (fs.existsSync(firmaPath)) fs.unlinkSync(firmaPath);
 
-    res.json({ mensaje: "✅ Firma actualizada", archivo: "firma.png" });
+    // Convertir la imagen a PNG y guardarla
+    await sharp(archivo.path)
+      .png()
+      .toFile(firmaPath);
+
+    // Borrar archivo temporal subido
+    fs.unlinkSync(archivo.path);
+
+    res.json({ mensaje: "✅ Firma actualizada y convertida a PNG", archivo: "firma.png" });
   } catch (error) {
     console.error("❌ Error al subir firma:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const obtenerFirma = (req, res) => {
   const firmaPath = path.resolve("firma", "firma.png");
