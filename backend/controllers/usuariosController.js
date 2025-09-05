@@ -1,4 +1,5 @@
 import Usuario from "../models/Usuario.js";
+import Documentos from "../models/Documentos.js";
 import Rol from "../models/Rol.js";
 import Login from "../models/Login.js";
 import bcrypt from "bcrypt";
@@ -55,12 +56,21 @@ const createUsuario = async (req, res) => {
       });
     }
 
+    // 🔹 Crear documento vacío ligado al usuario
+    await Documentos.query().insert({
+      usuario: usuario.id,
+      archivo1: null,
+      archivo2: null,
+      estadogf_id: 3, // estado inicial GF
+      estadogc_id: 3, // estado inicial GC
+    });
+
     res.status(201).json(usuario);
   } catch (error) {
+    console.error("Error al crear usuario:", error);
     res.status(500).json({ error: error.message });
   }
 };
-
 // Actualizar usuario
 const updateUsuario = async (req, res) => {
   const { nombre, numero_doc, correo, rol_id, password } = req.body;
@@ -127,15 +137,22 @@ const updateUsuario = async (req, res) => {
 const deleteUsuario = async (req, res) => {
   try {
     const usuario = await Usuario.query().findById(req.params.id);
-    if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
 
     // Si tiene login → eliminarlo
     await Login.query().delete().where("usuario", usuario.id);
 
+    // Eliminar documentos asociados
+    await Documentos.query().delete().where("usuario", usuario.id);
+
+    // Finalmente eliminar el usuario
     await Usuario.query().deleteById(usuario.id);
 
-    res.json({ message: "Usuario eliminado correctamente" });
+    res.json({ message: "Usuario y documentos eliminados correctamente" });
   } catch (error) {
+    console.error("Error al eliminar usuario:", error);
     res.status(500).json({ error: error.message });
   }
 };

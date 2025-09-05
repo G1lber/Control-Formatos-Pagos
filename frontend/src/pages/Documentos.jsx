@@ -302,7 +302,7 @@ const handleFirmaUpload = async () => {
 
         {/* Filtros */}
         <div className="flex gap-2 mb-4 flex-wrap">
-          {["Pendiente", "Revisado", "Sin archivo", "Todos"].map((f) => (
+          {["Pendiente", "Revisado", "Sin Documentos", "Todos"].map((f) => (
             <button
               key={f}
               onClick={() => setFiltro(f)}
