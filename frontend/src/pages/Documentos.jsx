@@ -26,6 +26,9 @@ export default function Documentos() {
   const [errorFirma, setErrorFirma] = useState("");
   const [loadingAccion, setLoadingAccion] = useState(false);
 
+  const [fechaGFOriginal, setFechaGFOriginal] = useState("");
+  const [fechaGCOriginal, setFechaGCOriginal] = useState("");
+
   // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 12;
@@ -63,8 +66,14 @@ export default function Documentos() {
       try {
         const { data } = await api.get("/fechas");
         if (data) {
-          setFechaGF(data.fechaGF ? toColombiaInputString(data.fechaGF) : "");
-          setFechaGC(data.fechaGC ? toColombiaInputString(data.fechaGC) : "");
+          const gf = data.fechaGF ? toColombiaInputString(data.fechaGF) : "";
+          const gc = data.fechaGC ? toColombiaInputString(data.fechaGC) : ""
+          // 💾 Guarda las fechas iniciales
+          setFechaGF(gf);
+          setFechaGC(gc);
+
+          setFechaGFOriginal(gf);
+          setFechaGCOriginal(gc);
         }
       } catch (err) {
         console.error("❌ Error al cargar fechas:", err);
@@ -82,6 +91,8 @@ export default function Documentos() {
         fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
       });
       setModalFechasOpen(false);
+      setFechaGFOriginal(fechaGF);
+      setFechaGCOriginal(fechaGC);
     } catch (error) {
       console.error("Error guardando fechas:", error);
       setErrorFechas("No se pudieron guardar las fechas. Intenta nuevamente.");
@@ -89,7 +100,16 @@ export default function Documentos() {
       setLoadingAccion(false);
     }
   };
+   // 🆕 Función para manejar el cierre del modal
+  const handleCloseModal = () => {
+    // 🚫 Evita cerrar si hay una acción en curso
+    if (loadingAccion) return;
 
+    // ⏪ Restaura las fechas a sus valores originales
+    setFechaGF(fechaGFOriginal);
+    setFechaGC(fechaGCOriginal);
+    setModalFechasOpen(false);
+  };
   // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
   const indicePrimero = indiceUltimo - usuariosPorPagina;
@@ -196,6 +216,7 @@ export default function Documentos() {
 
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] p-4 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 relative">
+    
       {/* Botón Volver */}
       <Link
         to="/menu"
@@ -678,8 +699,8 @@ export default function Documentos() {
       {/* Modales */}
       <ConfirmacionModal
         isOpen={modalFechasOpen}
-        onClose={() => { if (!loadingAccion) setModalFechasOpen(false); }}
-        onConfirm={() => { if (!loadingAccion) handleActivar(); }}
+        onClose={handleCloseModal} // 🔄 Usa la nueva función aquí
+        onConfirm={handleActivar}
         tipo="activarFechas"
         error={errorFechas}
       />
