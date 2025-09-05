@@ -7,11 +7,8 @@ export default function HomeMenu() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 🔹 Borrar sesión del contexto
     logout();
-    // 🔹 Eliminar también el token del localStorage (si lo estás guardando)
     localStorage.removeItem("token");
-    // 🔹 Redirigir al login
     navigate("/login");
   };
 
@@ -31,25 +28,39 @@ export default function HomeMenu() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-fondo)] px-4 relative">
-      {/* 🔹 Botón cerrar sesión arriba a la derecha */}
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen flex flex-col bg-[var(--color-fondo)]">
+      {/* 🔹 Navbar */}
+      <header className="flex justify-between items-center px-6 py-4 shadow-md bg-white/90 backdrop-blur-sm">
+        {/* Logo + Título */}
+        <div className="flex items-center gap-3">
+          <img
+            src="/img/sena-logo.png"
+            alt="Logo SENA"
+            className="w-12 h-12 object-contain"
+          />
+          <h1 className="text-lg md:text-xl font-bold text-[var(--color-principal)] tracking-wide">
+            Bienvenido Administrador!!!
+          </h1>
+        </div>
+
+        {/* Botón cerrar sesión */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)]"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-principal)] text-white hover:bg-[var(--color-hover)] transition"
         >
           <LogOut className="w-5 h-5" />
-          <span>Cerrar sesión</span>
+          <span className="hidden sm:inline">Cerrar sesión</span>
         </button>
-      </div>
+      </header>
 
-      <div className="flex-grow flex items-center justify-center">
+      {/* 🔹 Contenido principal */}
+      <main className="flex-grow flex items-center justify-center px-4">
         <div className="max-w-md w-full space-y-8">
           {/* Encabezado */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-[var(--color-principal)]">
-              Menú
-            </h1>
+            <h2 className="text-2xl font-bold text-[var(--color-principal)]">
+              Menú Principal
+            </h2>
             <p className="text-[var(--color-secundario)]/80 text-sm mt-2">
               Selecciona una de las opciones para continuar
             </p>
@@ -60,15 +71,14 @@ export default function HomeMenu() {
             <Link
               to={opt.path}
               key={opt.path}
-              className="block bg-[var(--color-blanco)] shadow-sm hover:shadow-md rounded-xl p-6 transition-all duration-300 
-                       border border-[var(--color-principal)] hover:shadow-lg"
+              className="block bg-[var(--color-blanco)] shadow-sm hover:shadow-lg rounded-xl p-6 transition-all duration-300 border border-[var(--color-principal)]"
             >
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-lg">{opt.icon}</div>
                 <div>
-                  <h2 className="text-lg font-semibold text-[var(--color-secundario)]">
+                  <h3 className="text-lg font-semibold text-[var(--color-secundario)]">
                     {opt.name}
-                  </h2>
+                  </h3>
                   <p className="text-sm text-[var(--color-texto)]/70">
                     {opt.desc}
                   </p>
@@ -77,7 +87,12 @@ export default function HomeMenu() {
             </Link>
           ))}
         </div>
-      </div>
+      </main>
+
+      {/* 🔹 Footer */}
+      <footer className="text-center py-4 text-xs text-gray-500">
+        © {new Date().getFullYear()} Control de Formatos de Pagos · Todos los derechos reservados
+      </footer>
     </div>
   );
 }
