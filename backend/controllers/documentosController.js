@@ -316,14 +316,22 @@ export const subirDocumento = async (req, res) => {
     let documento = await Documentos.query().findOne({ usuario: usuario.id });
 
     if (!documento) {
-      documento = await Documentos.query().insert({
-        usuario: usuario.id,
-        archivo1: tipo === "1" ? archivo.filename : null,
-        archivo2: tipo === "2" ? archivo.filename : null,
-        estadogf_id: 1, // estado inicial GF
-        estadogc_id: 1, // estado inicial GC
-      });
+      // 🔹 Insertar nuevo documento dependiendo del tipo
+      if (tipo === "1") {
+        documento = await Documentos.query().insert({
+          usuario: usuario.id,
+          archivo1: archivo.filename,
+          estadogf_id: 1, // solo GF
+        });
+      } else if (tipo === "2") {
+        documento = await Documentos.query().insert({
+          usuario: usuario.id,
+          archivo2: archivo.filename,
+          estadogc_id: 1, // solo GC
+        });
+      }
     } else {
+      // 🔹 Actualizar documento existente
       if (tipo === "1") {
         if (documento.archivo1) {
           const oldPath = path.join(UPLOADS_DIR, documento.archivo1);
@@ -331,6 +339,7 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo1: archivo.filename,
+          estadogf_id: 1, // ✅ solo cambia GF
         });
       } else if (tipo === "2") {
         if (documento.archivo2) {
@@ -339,6 +348,7 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo2: archivo.filename,
+          estadogc_id: 1, // ✅ solo cambia GC
         });
       }
     }
@@ -349,6 +359,7 @@ export const subirDocumento = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // 📄 Listar todos los documentos
 export const obtenerDocumentos = async (req, res) => {
