@@ -10,6 +10,7 @@ import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
 import * as cheerio from "cheerio";
 import sharp from "sharp";
+import { log } from "console";
 
 
 
@@ -140,39 +141,79 @@ function getImageModule() {
 }
 
 export const firmarWord = async (req, res) => {
+  let filePath;
+  let firmaPath;
   try {
-    const { file } = req.body;
-    const filePath = path.resolve("documentos-formatos", file);
-    const firmaPath = path.resolve("firma", "firma.png");
+    const { file, documentoId } = req.body; // Validar entrada
 
+    if (!file || !documentoId) {
+      return res.status(400).json({ error: "Faltan datos requeridos" });
+    }
+
+    filePath = path.resolve("documentos-formatos", file);
+    firmaPath = path.resolve("firma", "firma.png");
+
+    // Validar existencia de archivos
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "Documento no encontrado" });
+    }
+    if (!fs.existsSync(firmaPath)) {
+      return res.status(404).json({ error: "No hay firma registrada" });
+    }
+
+    // Cargar y procesar el archivo Word
     const content = fs.readFileSync(filePath, "binary");
     const zip = new PizZip(content);
 
-    // 🔹 Configuración del módulo de imágenes
     const imageModule = new ImageModule({
       getImage: (tagValue) => fs.readFileSync(tagValue),
-      getSize: () => [150, 50], // ancho, alto en px
+      getSize: () => [150, 50],
     });
 
-    const doc = new Docxtemplater(zip, {
-      modules: [imageModule],
-    });
-
-    // 🔹 Pasar la ruta de la firma
-    doc.render({
-      firma: firmaPath,
-    });
+    const doc = new Docxtemplater(zip, { modules: [imageModule] });
+    doc.render({ firma: firmaPath });
 
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
     fs.writeFileSync(filePath, buffer);
 
-    return res.json({
+    // ✅ Responder rápido al cliente
+    res.json({
       message: "✅ Documento firmado correctamente",
       url: `/documentos-formatos/${file}`,
     });
+
+    // 📩 Enviar correo en segundo plano
+    (async () => {
+      try {
+        const documento = await Documentos.query()
+          .findById(documentoId)
+          .withGraphFetched("usuarioRef");
+
+        if (documento && documento.usuarioRef?.correo) {
+
+          try {
+            await sendMail(
+              documento.usuarioRef.correo,
+              "✅ Documento aprobado",
+              `Su documento ${file} ha sido aprobado y firmado correctamente.`,
+              [{ filename: file, path: filePath }]
+            );
+            console.log("✅ Correo enviado con éxito");
+          } catch (err) {
+            console.error("❌ Error en sendMail:", err);
+          }
+        } else {
+          console.warn("⚠️ No se encontró correo de usuario para enviar.");
+        }
+      } catch (err) {
+        console.error("❌ Error obteniendo documento para correo:", err);
+      }
+    })();
   } catch (err) {
-    console.error("❌ Error firmando documento:", err);
-    return res.status(500).json({ error: "Error firmando documento" });
+    console.error("❌ Error firmando documento Word:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Error firmando documento Word" });
+    }
   }
 };
 
