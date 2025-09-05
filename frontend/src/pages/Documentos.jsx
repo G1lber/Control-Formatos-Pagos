@@ -302,7 +302,7 @@ const handleFirmaUpload = async () => {
 
         {/* Filtros */}
         <div className="flex gap-2 mb-4 flex-wrap">
-          {["Pendiente", "Revisado", "Sin Documentos", "Todos"].map((f) => (
+          {["Pendiente", "Revisado", "Sin Documento", "Todos"].map((f) => (
             <button
               key={f}
               onClick={() => setFiltro(f)}
@@ -371,7 +371,7 @@ const handleFirmaUpload = async () => {
                             ? "bg-yellow-100 text-yellow-800" 
                             : n.estadoGF?.nombre_estado === "Revisado"
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-red-100 text-gray-800"
                         }`}>
                           {n.estadoGF?.nombre_estado}
                         </span>
@@ -382,7 +382,7 @@ const handleFirmaUpload = async () => {
                             ? "bg-yellow-100 text-yellow-800" 
                             : n.estadoGC?.nombre_estado === "Revisado"
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-red-100 text-gray-800"
                         }`}>
                           {n.estadoGC?.nombre_estado}
                         </span>
@@ -507,7 +507,7 @@ const handleFirmaUpload = async () => {
                         ? "bg-yellow-100 text-yellow-800"
                         : n.estadoGF?.nombre_estado === "Revisado"
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-red-100 text-gray-800"
                     }`}>
                       {n.estadoGF?.nombre_estado}
                     </span>
@@ -519,7 +519,7 @@ const handleFirmaUpload = async () => {
                         ? "bg-yellow-100 text-yellow-800"
                         : n.estadoGC?.nombre_estado === "Revisado"
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-red-100 text-gray-800"
                     }`}>
                       {n.estadoGC?.nombre_estado}
                     </span>
