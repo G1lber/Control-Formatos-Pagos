@@ -5,7 +5,7 @@ import {
   upload,
   obtenerDocumentos,
   obtenerDocumentoPorId,
-  actualizarEstado,
+  // actualizarEstado,
   eliminarDocumento,
   subirFirma,
   obtenerFirma,
@@ -41,7 +41,7 @@ router.get("/firma", obtenerFirma);
 router.get("/", obtenerDocumentos);
 
 router.get("/:id", obtenerDocumentoPorId);
-router.patch("/:id/estado", actualizarEstado);
+// router.patch("/:id/estado", actualizarEstado);
 router.delete("/:id", eliminarDocumento);
 
 export default router;

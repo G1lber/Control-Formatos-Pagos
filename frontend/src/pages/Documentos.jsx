@@ -32,9 +32,17 @@ export default function Documentos() {
 
   // 🔍 Filtro
   const filtrados = documentos.filter((n) => {
-    const coincideEstado =
-      filtro === "Todos" || n.estado?.nombre_estado === filtro;
+    // ✅ Chequeo de estados
+    const estados = [
+      n.estado?.nombre_estado,
+      n.estadoGF?.nombre_estado,
+      n.estadoGC?.nombre_estado,
+    ].filter(Boolean); // quita undefined/null
 
+    const coincideEstado =
+      filtro === "Todos" || estados.includes(filtro);
+
+    // 🔍 Chequeo de búsqueda
     const coincideBusqueda =
       query === "" ||
       n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
@@ -338,7 +346,8 @@ const handleFirmaUpload = async () => {
                   <th className="p-3">Archivo GF</th>
                   <th className="p-3">Archivo GC</th>
                   <th className="p-3">Fecha de inicio</th>
-                  <th className="p-3">Estado</th>
+                  <th className="p-3">Estado GF</th>
+                  <th className="p-3">Estado GC</th>
                   <th className="p-3">Acciones</th>
                 </tr>
               </thead>
@@ -358,13 +367,24 @@ const handleFirmaUpload = async () => {
                       <td className="p-3">{n.fecha}</td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          n.estado?.nombre_estado === "Pendiente" 
+                          n.estadoGF?.nombre_estado === "Pendiente" 
                             ? "bg-yellow-100 text-yellow-800" 
-                            : n.estado?.nombre_estado === "Revisado"
+                            : n.estadoGF?.nombre_estado === "Revisado"
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
                         }`}>
-                          {n.estado?.nombre_estado}
+                          {n.estadoGF?.nombre_estado}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          n.estadoGC?.nombre_estado === "Pendiente" 
+                            ? "bg-yellow-100 text-yellow-800" 
+                            : n.estadoGC?.nombre_estado === "Revisado"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}>
+                          {n.estadoGC?.nombre_estado}
                         </span>
                       </td>
                       <td className="p-3">
@@ -481,18 +501,29 @@ const handleFirmaUpload = async () => {
                     <span>{n.fecha}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="font-semibold">Estado:</span>
+                    <span className="font-semibold">Estado GF:</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      n.estado?.nombre_estado === "Pendiente" 
-                        ? "bg-yellow-100 text-yellow-800" 
-                        : n.estado?.nombre_estado === "Revisado"
+                      n.estadoGF?.nombre_estado === "Pendiente"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : n.estadoGF?.nombre_estado === "Revisado"
                         ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
                     }`}>
-                      {n.estado?.nombre_estado}
+                      {n.estadoGF?.nombre_estado}
                     </span>
                   </p>
-
+                  <p className="flex justify-between">
+                    <span className="font-semibold">Estado GC:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      n.estadoGC?.nombre_estado === "Pendiente"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : n.estadoGC?.nombre_estado === "Revisado"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}>
+                      {n.estadoGC?.nombre_estado}
+                    </span>
+                  </p>
                   <div className="pt-2 flex justify-center relative w-full">
                     {n.archivo1 && n.archivo2 ? (
                       <>

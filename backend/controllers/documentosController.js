@@ -305,7 +305,7 @@ export const obtenerFirma = (req, res) => {
 // 📤 Subir documento
 export const subirDocumento = async (req, res) => {
   try {
-    const { tipo } = req.body;
+    const { tipo } = req.body; // "1" o "2"
     const archivo = req.file;
     const usuario = req.usuario;
 
@@ -320,7 +320,8 @@ export const subirDocumento = async (req, res) => {
         usuario: usuario.id,
         archivo1: tipo === "1" ? archivo.filename : null,
         archivo2: tipo === "2" ? archivo.filename : null,
-        estado_id: 1, // estado inicial
+        estadogf_id: 1, // estado inicial GF
+        estadogc_id: 1, // estado inicial GC
       });
     } else {
       if (tipo === "1") {
@@ -353,7 +354,7 @@ export const subirDocumento = async (req, res) => {
 export const obtenerDocumentos = async (req, res) => {
   try {
     const documentos = await Documentos.query()
-      .withGraphFetched("[usuarioRef, estado]") // incluye usuario + estado
+      .withGraphFetched("[usuarioRef, estadoGF, estadoGC]") // incluye usuario + estados GF y GC
       .orderBy("id", "desc");
 
     res.json(documentos);
@@ -370,7 +371,7 @@ export const obtenerDocumentoPorId = async (req, res) => {
 
     const documento = await Documentos.query()
       .findById(id)
-      .withGraphFetched("[usuarioRef, estado]");
+      .withGraphFetched("[usuarioRef, estadoGF, estadoGC]");
 
     if (!documento) {
       return res.status(404).json({ error: "Documento no encontrado" });
@@ -383,11 +384,11 @@ export const obtenerDocumentoPorId = async (req, res) => {
   }
 };
 
-// ✏️ Actualizar estado del documento
-export const actualizarEstado = async (req, res) => {
+// ✏️ Actualizar estado GF
+export const actualizarEstadoGF = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado_id } = req.body;
+    const { estadogf_id } = req.body;
 
     const documento = await Documentos.query().findById(id);
 
@@ -395,12 +396,33 @@ export const actualizarEstado = async (req, res) => {
       return res.status(404).json({ error: "Documento no encontrado" });
     }
 
-    const actualizado = await documento.$query().patchAndFetch({ estado_id });
+    const actualizado = await documento.$query().patchAndFetch({ estadogf_id });
 
-    res.json({ mensaje: "Estado actualizado correctamente", documento: actualizado });
+    res.json({ mensaje: "Estado GF actualizado correctamente", documento: actualizado });
   } catch (error) {
-    console.error("Error al actualizar estado:", error);
-    res.status(500).json({ error: "Error al actualizar estado" });
+    console.error("Error al actualizar estado GF:", error);
+    res.status(500).json({ error: "Error al actualizar estado GF" });
+  }
+};
+
+// ✏️ Actualizar estado GC
+export const actualizarEstadoGC = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estadogc_id } = req.body;
+
+    const documento = await Documentos.query().findById(id);
+
+    if (!documento) {
+      return res.status(404).json({ error: "Documento no encontrado" });
+    }
+
+    const actualizado = await documento.$query().patchAndFetch({ estadogc_id });
+
+    res.json({ mensaje: "Estado GC actualizado correctamente", documento: actualizado });
+  } catch (error) {
+    console.error("Error al actualizar estado GC:", error);
+    res.status(500).json({ error: "Error al actualizar estado GC" });
   }
 };
 

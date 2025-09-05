@@ -8,7 +8,6 @@ class Documento extends Model {
   }
 
   static get relationMappings() {
-
     return {
       usuarioRef: {
         relation: Model.BelongsToOneRelation,
@@ -18,11 +17,22 @@ class Documento extends Model {
           to: "usuarios.id",
         },
       },
-      estado: {
+      // Estado GF
+      estadoGF: {
         relation: Model.BelongsToOneRelation,
         modelClass: Estado,
         join: {
-          from: "documentos.estado_id",
+          from: "documentos.estadogf_id",
+          to: "estados.id",
+        },
+      },
+
+      // Estado GC
+      estadoGC: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Estado,
+        join: {
+          from: "documentos.estadogc_id",
           to: "estados.id",
         },
       },
