@@ -22,7 +22,7 @@ transporter.verify((error, success) => {
   }
 });
 
-export const sendMail = async (to, subject, text) =>{
+export const sendMail = async (to, subject, text, attachments = []) =>{
   try {
     const mailOptions = {
       from: `"Control de Pagos Sena" <${process.env.SMTP_USER}>`,
@@ -30,6 +30,7 @@ export const sendMail = async (to, subject, text) =>{
       subject,
       text,
       html: `<p>${text.replace(/\n/g, '<br>')}</p>`,
+      attachments,
     };
 
     const info = await transporter.sendMail(mailOptions);

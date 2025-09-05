@@ -5,11 +5,13 @@ import {
   upload,
   obtenerDocumentos,
   obtenerDocumentoPorId,
-  actualizarEstado,
+  // actualizarEstado,
   eliminarDocumento,
   subirFirma,
   obtenerFirma,
-  firmarDocumento
+  firmarDocumento,
+  firmarWord,
+  insertarMarcadorFirma
 } from "../controllers/documentosController.js";
 import { uploadFirma } from "../middlewares/upload.js";
 const router = express.Router();
@@ -29,6 +31,8 @@ router.post(
   subirDocumento
 );
 
+router.post("/firmar-word", firmarWord);
+router.post("/insertar-marcador", insertarMarcadorFirma);
 router.post("/firma", uploadFirma.single("firma"), subirFirma);
 
 router.post("/aprobar", firmarDocumento);
@@ -37,7 +41,7 @@ router.get("/firma", obtenerFirma);
 router.get("/", obtenerDocumentos);
 
 router.get("/:id", obtenerDocumentoPorId);
-router.patch("/:id/estado", actualizarEstado);
+// router.patch("/:id/estado", actualizarEstado);
 router.delete("/:id", eliminarDocumento);
 
 export default router;

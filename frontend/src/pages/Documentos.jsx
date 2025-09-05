@@ -38,9 +38,17 @@ export default function Documentos() {
 
   // 🔍 Filtro
   const filtrados = documentos.filter((n) => {
-    const coincideEstado =
-      filtro === "Todos" || n.estado?.nombre_estado === filtro;
+    // ✅ Chequeo de estados
+    const estados = [
+      n.estado?.nombre_estado,
+      n.estadoGF?.nombre_estado,
+      n.estadoGC?.nombre_estado,
+    ].filter(Boolean); // quita undefined/null
 
+    const coincideEstado =
+      filtro === "Todos" || estados.includes(filtro);
+
+    // 🔍 Chequeo de búsqueda
     const coincideBusqueda =
       query === "" ||
       n.usuarioRef?.nombre?.toLowerCase().includes(query.toLowerCase()) ||
@@ -328,7 +336,7 @@ export default function Documentos() {
 
         {/* Filtros */}
         <div className="flex gap-2 mb-4 flex-wrap">
-          {["Pendiente", "Revisado", "Sin archivo", "Todos"].map((f) => (
+          {["Pendiente", "Revisado", "Sin Documento", "Todos"].map((f) => (
             <button
               key={f}
               onClick={() => setFiltro(f)}
@@ -372,7 +380,8 @@ export default function Documentos() {
                   <th className="p-3">Archivo GF</th>
                   <th className="p-3">Archivo GC</th>
                   <th className="p-3">Fecha de inicio</th>
-                  <th className="p-3">Estado</th>
+                  <th className="p-3">Estado GF</th>
+                  <th className="p-3">Estado GC</th>
                   <th className="p-3">Acciones</th>
                 </tr>
               </thead>
@@ -392,13 +401,24 @@ export default function Documentos() {
                       <td className="p-3">{n.fecha}</td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          n.estado?.nombre_estado === "Pendiente" 
+                          n.estadoGF?.nombre_estado === "Pendiente" 
                             ? "bg-yellow-100 text-yellow-800" 
-                            : n.estado?.nombre_estado === "Revisado"
+                            : n.estadoGF?.nombre_estado === "Revisado"
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-red-100 text-gray-800"
                         }`}>
-                          {n.estado?.nombre_estado}
+                          {n.estadoGF?.nombre_estado}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          n.estadoGC?.nombre_estado === "Pendiente" 
+                            ? "bg-yellow-100 text-yellow-800" 
+                            : n.estadoGC?.nombre_estado === "Revisado"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-gray-800"
+                        }`}>
+                          {n.estadoGC?.nombre_estado}
                         </span>
                       </td>
                       <td className="p-3">
@@ -424,7 +444,7 @@ export default function Documentos() {
                                   } right-0 w-40 bg-[var(--color-secundario)] text-white rounded-lg shadow-lg z-50`}
                                 >
                                   <Link
-                                    to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                                    to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                                     onClick={() => setMenuAbierto(null)}
                                     className="block px-3 py-2 text-xs font-semibold hover:bg-[var(--color-hover-secundario)] rounded-t-lg transition"
                                   >
@@ -442,7 +462,7 @@ export default function Documentos() {
                             </>
                           ) : n.archivo1 ? (
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow"
                             >
                               Revisar GF
@@ -515,18 +535,29 @@ export default function Documentos() {
                     <span>{n.fecha}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="font-semibold">Estado:</span>
+                    <span className="font-semibold">Estado GF:</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      n.estado?.nombre_estado === "Pendiente" 
-                        ? "bg-yellow-100 text-yellow-800" 
-                        : n.estado?.nombre_estado === "Revisado"
+                      n.estadoGF?.nombre_estado === "Pendiente"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : n.estadoGF?.nombre_estado === "Revisado"
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-red-100 text-gray-800"
                     }`}>
-                      {n.estado?.nombre_estado}
+                      {n.estadoGF?.nombre_estado}
                     </span>
                   </p>
-
+                  <p className="flex justify-between">
+                    <span className="font-semibold">Estado GC:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      n.estadoGC?.nombre_estado === "Pendiente"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : n.estadoGC?.nombre_estado === "Revisado"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-gray-800"
+                    }`}>
+                      {n.estadoGC?.nombre_estado}
+                    </span>
+                  </p>
                   <div className="pt-2 flex justify-center relative w-full">
                     {n.archivo1 && n.archivo2 ? (
                       <>
@@ -545,7 +576,7 @@ export default function Documentos() {
                             } left-0 right-0 flex flex-col gap-1 text-white font-semibold text-sm rounded-lg shadow-lg z-50`}
                           >
                             <Link
-                              to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                              to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                               onClick={() => setMenuAbierto(null)}
                               className="px-4 py-2 rounded-t-lg bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] transition text-center"
                             >
@@ -563,7 +594,7 @@ export default function Documentos() {
                       </>
                     ) : n.archivo1 ? (
                       <Link
-                        to={`/ver/gc/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
+                        to={`/ver/gf/${encodeURIComponent(n.archivo1)}?id=${n.id}`}
                         className="bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow w-full text-center"
                       >
                         Revisar GF

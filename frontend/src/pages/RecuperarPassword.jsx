@@ -8,57 +8,59 @@ export default function RecuperarPassword() {
   const [mostrarCodigo, setMostrarCodigo] = useState(false);
   const [alerta, setAlerta] = useState({ msg: "", error: false });
 
-const handleRecuperar = async () => {
-  if (!correo) {
-    setAlerta({ msg: "El correo es obligatorio", error: true });
-    return;
-  }
+  const handleRecuperar = async () => {
+    if (!correo) {
+      setAlerta({ msg: "El correo es obligatorio", error: true });
+      return;
+    }
 
-  try {
-    const resp = await fetch("http://localhost:3000/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ correo }),
-    });
+    try {
+      const resp = await fetch("http://localhost:4000/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo }),
+      });
 
-    const data = await resp.json();
+      const data = await resp.json();
 
-    if (!resp.ok) throw new Error(data.error || "Error al enviar código");
+      // Manejo de errores
+      if (!resp.ok) {
+        throw new Error(data.error || "Error al enviar código");
+      }
 
-    setAlerta({ msg: data.mensaje, error: false });
-    setMostrarCodigo(true);
-  } catch (err) {
-    setAlerta({ msg: err.message, error: true });
-  }
-};
+      setAlerta({ msg: data.mensaje, error: false });
+      setMostrarCodigo(true);
+    } catch (err) {
+      setAlerta({ msg: err.message, error: true });
+    }
+  };
 
-const handleVerificar = async () => {
-  if (!codigo) {
-    setAlerta({ msg: "Debes ingresar el código", error: true });
-    return;
-  }
+  const handleVerificar = async () => {
+    if (!codigo) {
+      setAlerta({ msg: "Debes ingresar el código", error: true });
+      return;
+    }
 
-  try {
-    const resp = await fetch("http://localhost:3000/auth/verify-code", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ correo, codigo }),
-    });
+    try {
+      const resp = await fetch("http://localhost:4000/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, codigo }),
+      });
 
-    const data = await resp.json();
+      const data = await resp.json();
 
-    if (!resp.ok) throw new Error(data.error || "Código inválido");
+      if (!resp.ok) throw new Error(data.error || "Código inválido");
 
-    setAlerta({ msg: "Código verificado ✅", error: false });
+      setAlerta({ msg: "Código verificado ✅", error: false });
 
-    setTimeout(() => {
-      navigate("/nueva-password", { state: { email: correo, codigo } });
-    }, 1500);
-  } catch (err) {
-    setAlerta({ msg: err.message, error: true });
-  }
-};
-
+      setTimeout(() => {
+        navigate("/nueva-password", { state: { email: correo, codigo } });
+      }, 1500);
+    } catch (err) {
+      setAlerta({ msg: err.message, error: true });
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">

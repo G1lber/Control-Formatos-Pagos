@@ -26,7 +26,7 @@ export default function NuevaPassword() {
     }
 
     try {
-      const resp = await fetch("http://localhost:3000/auth/reset-password", {
+      const resp = await fetch("http://localhost:4000/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

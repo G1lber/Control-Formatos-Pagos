@@ -4,6 +4,14 @@ import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 import { PDFDocument, rgb } from "pdf-lib";
+import { sendMail } from "../config/mailer.js"
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
+import ImageModule from "docxtemplater-image-module-free";
+import * as cheerio from "cheerio";
+import sharp from "sharp";
+
+
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
 const FIRMAS_DIR = path.resolve("firma");
@@ -67,48 +75,186 @@ export const upload = multer({ storage, fileFilter });
 
 // --- Controladores ---
 
-// Firmar el archivo
-export const firmarDocumento = async (req, res) => {
+// Insertar Marcador de donde ira la firma
+export const insertarMarcadorFirma = async (req, res) => {
   try {
-    const { file } = req.body; // nombre del archivo
+    const { file, posicion } = req.body;
+    const filePath = path.resolve("documentos-formatos", file);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "Documento no encontrado" });
+    }
+
+    const content = fs.readFileSync(filePath, "binary");
+    const zip = new PizZip(content);
+
+    // Obtener XML principal
+    const xml = zip.file("word/document.xml").asText();
+    const $ = cheerio.load(xml, { xmlMode: true });
+
+    const paragraphs = $("w\\:p");
+    let idx = Number(posicion);
+
+    if (!Number.isInteger(idx) || idx < 0 || idx >= paragraphs.length) {
+      idx = paragraphs.length - 1;
+    }
+
+    // Insertamos el marcador {firma} en ese párrafo
+    const newRun = `
+      <w:r>
+        <w:t xml:space="preserve">{%firma}</w:t>
+      </w:r>
+    `;
+
+    $(paragraphs[idx]).append(newRun);
+
+    // Guardar XML de vuelta en el zip
+    zip.file("word/document.xml", $.xml());
+
+    const buffer = zip.generate({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+    });
+
+    fs.writeFileSync(filePath, buffer);
+
+    return res.json({ message: "Marcador {firma} insertado ✅" });
+  } catch (err) {
+    console.error("❌ Error insertando marcador:", err);
+    return res.status(500).json({ error: "Error insertando marcador" });
+  }
+};
+
+//Firmar Word
+function getImageModule() {
+  return new ImageModule({
+    centered: true,
+    getImage: (tagValue) => {
+      // tagValue = la ruta que pasas en doc.render()
+      return fs.readFileSync(tagValue);
+    },
+    getSize: () => {
+      return [150, 50]; // ancho, alto en px
+    },
+  });
+}
+
+export const firmarWord = async (req, res) => {
+  try {
+    const { file } = req.body;
     const filePath = path.resolve("documentos-formatos", file);
     const firmaPath = path.resolve("firma", "firma.png");
 
+    const content = fs.readFileSync(filePath, "binary");
+    const zip = new PizZip(content);
+
+    // 🔹 Configuración del módulo de imágenes
+    const imageModule = new ImageModule({
+      getImage: (tagValue) => fs.readFileSync(tagValue),
+      getSize: () => [150, 50], // ancho, alto en px
+    });
+
+    const doc = new Docxtemplater(zip, {
+      modules: [imageModule],
+    });
+
+    // 🔹 Pasar la ruta de la firma
+    doc.render({
+      firma: firmaPath,
+    });
+
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+    fs.writeFileSync(filePath, buffer);
+
+    return res.json({
+      message: "✅ Documento firmado correctamente",
+      url: `/documentos-formatos/${file}`,
+    });
+  } catch (err) {
+    console.error("❌ Error firmando documento:", err);
+    return res.status(500).json({ error: "Error firmando documento" });
+  }
+};
+
+
+// Firmar el archivo PDF
+export const firmarDocumento = async (req, res) => {
+  let filePath;
+  let firmaPath;
+  try {
+    const { file, documentoId } = req.body; // nombre del archivo
+    filePath = path.resolve("documentos-formatos", file);
+    firmaPath = path.resolve("firma", "firma.png");
+
+    // Validar existencia de archivos
     if (!fs.existsSync(filePath)) {
-      return res.status(500).json({ error: "Documento no encontrado" });
+      return res.status(404).json({ error: "Documento no encontrado" });
     }
     if (!fs.existsSync(firmaPath)) {
       return res.status(404).json({ error: "No hay firma registrada" });
     }
 
-    // 👉 Cargar PDF
+    // --- Cargar PDF ---
     const pdfBytes = fs.readFileSync(filePath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
 
-    // 👉 Insertar firma
+    // --- Cargar firma ---
     const firmaBytes = fs.readFileSync(firmaPath);
-    const firmaImage = await pdfDoc.embedPng(firmaBytes);
+    let firmaImage;
 
-    const pages = pdfDoc.getPages();
-    const firstPage = pages[0];
+    if (firmaPath.endsWith(".png")) {
+      firmaImage = await pdfDoc.embedPng(firmaBytes);
+    } else if (firmaPath.endsWith(".jpg") || firmaPath.endsWith(".jpeg")) {
+      firmaImage = await pdfDoc.embedJpg(firmaBytes);
+    } else {
+      throw new Error("La firma debe ser PNG o JPG");
+    }
+    // Insertar firma en la primera página
+    const firstPage = pdfDoc.getPages()[0];
     firstPage.drawImage(firmaImage, {
-      x: 430,
-      y: 88,
-      width: 140,
-      height: 60,
+      x: 460,
+      y: 110,
+      width: 100,
+      height: 25,
     });
 
-    // 👉 Guardar en el mismo archivo (sobrescribir)
+    // Guardar el PDF firmado
     const signedPdfBytes = await pdfDoc.save();
     fs.writeFileSync(filePath, signedPdfBytes);
 
+    // Responder rápido al frontend
     res.json({
-      message: "Documento firmado por contralor ✅",
-      url: `/documentos-formatos/${file}`, // mismo archivo actualizado
+      message: "Documento firmado correctamente ✅",
+      url: `/documentos-formatos/${file}`,
     });
+
+    // --- Enviar correo en segundo plano ---
+    (async () => {
+      try {
+        const documento = await Documentos.query()
+          .findById(documentoId)
+          .withGraphFetched("usuarioRef");
+
+        if (documento && documento.usuarioRef?.correo) {
+          await sendMail(
+            documento.usuarioRef.correo,
+            "✅ Documento aprobado",
+            `Su documento ${file} ha sido aprobado y firmado correctamente.`,
+            [
+              {
+                filename: file,
+                path: filePath,
+              },
+            ]
+          );
+        }
+      } catch (err) {
+        console.error("❌ Error enviando correo en segundo plano:", err);
+      }
+    })();
   } catch (err) {
-    console.error("❌ Error firmando contralor:", err);
-    res.status(500).json({ error: "Error firmando documento" });
+    console.error("❌ Error en firmarDocumento:", err);
+    res.status(500).json({ error: "Error procesando la firma del documento" });
   }
 };
 
@@ -122,22 +268,29 @@ export const subirFirma = async (req, res) => {
     }
 
     // Carpeta donde guardamos la firma
-    const firmaPath = path.resolve("firma", "firma.png");
+    const firmaDir = path.resolve("firma");
+    if (!fs.existsSync(firmaDir)) fs.mkdirSync(firmaDir, { recursive: true });
 
-    // Si existe una firma previa la eliminamos
-    if (fs.existsSync(firmaPath)) {
-      fs.unlinkSync(firmaPath);
-    }
+    const firmaPath = path.join(firmaDir, "firma.png");
 
-    // Movemos el archivo subido al nombre fijo
-    fs.renameSync(archivo.path, firmaPath);
+    // Eliminar firma previa
+    if (fs.existsSync(firmaPath)) fs.unlinkSync(firmaPath);
 
-    res.json({ mensaje: "✅ Firma actualizada", archivo: "firma.png" });
+    // Convertir la imagen a PNG y guardarla
+    await sharp(archivo.path)
+      .png()
+      .toFile(firmaPath);
+
+    // Borrar archivo temporal subido
+    fs.unlinkSync(archivo.path);
+
+    res.json({ mensaje: "✅ Firma actualizada y convertida a PNG", archivo: "firma.png" });
   } catch (error) {
     console.error("❌ Error al subir firma:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const obtenerFirma = (req, res) => {
   const firmaPath = path.resolve("firma", "firma.png");
@@ -152,7 +305,7 @@ export const obtenerFirma = (req, res) => {
 // 📤 Subir documento
 export const subirDocumento = async (req, res) => {
   try {
-    const { tipo } = req.body;
+    const { tipo } = req.body; // "1" o "2"
     const archivo = req.file;
     const usuario = req.usuario;
 
@@ -163,13 +316,22 @@ export const subirDocumento = async (req, res) => {
     let documento = await Documentos.query().findOne({ usuario: usuario.id });
 
     if (!documento) {
-      documento = await Documentos.query().insert({
-        usuario: usuario.id,
-        archivo1: tipo === "1" ? archivo.filename : null,
-        archivo2: tipo === "2" ? archivo.filename : null,
-        estado_id: 1, // estado inicial
-      });
+      // 🔹 Insertar nuevo documento dependiendo del tipo
+      if (tipo === "1") {
+        documento = await Documentos.query().insert({
+          usuario: usuario.id,
+          archivo1: archivo.filename,
+          estadogf_id: 1, // solo GF
+        });
+      } else if (tipo === "2") {
+        documento = await Documentos.query().insert({
+          usuario: usuario.id,
+          archivo2: archivo.filename,
+          estadogc_id: 1, // solo GC
+        });
+      }
     } else {
+      // 🔹 Actualizar documento existente
       if (tipo === "1") {
         if (documento.archivo1) {
           const oldPath = path.join(UPLOADS_DIR, documento.archivo1);
@@ -177,6 +339,7 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo1: archivo.filename,
+          estadogf_id: 1, // ✅ solo cambia GF
         });
       } else if (tipo === "2") {
         if (documento.archivo2) {
@@ -185,6 +348,7 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo2: archivo.filename,
+          estadogc_id: 1, // ✅ solo cambia GC
         });
       }
     }
@@ -196,11 +360,12 @@ export const subirDocumento = async (req, res) => {
   }
 };
 
+
 // 📄 Listar todos los documentos
 export const obtenerDocumentos = async (req, res) => {
   try {
     const documentos = await Documentos.query()
-      .withGraphFetched("[usuarioRef, estado]") // incluye usuario + estado
+      .withGraphFetched("[usuarioRef, estadoGF, estadoGC]") // incluye usuario + estados GF y GC
       .orderBy("id", "desc");
 
     res.json(documentos);
@@ -217,7 +382,7 @@ export const obtenerDocumentoPorId = async (req, res) => {
 
     const documento = await Documentos.query()
       .findById(id)
-      .withGraphFetched("[usuarioRef, estado]");
+      .withGraphFetched("[usuarioRef, estadoGF, estadoGC]");
 
     if (!documento) {
       return res.status(404).json({ error: "Documento no encontrado" });
@@ -230,11 +395,11 @@ export const obtenerDocumentoPorId = async (req, res) => {
   }
 };
 
-// ✏️ Actualizar estado del documento
-export const actualizarEstado = async (req, res) => {
+// ✏️ Actualizar estado GF
+export const actualizarEstadoGF = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado_id } = req.body;
+    const { estadogf_id } = req.body;
 
     const documento = await Documentos.query().findById(id);
 
@@ -242,12 +407,33 @@ export const actualizarEstado = async (req, res) => {
       return res.status(404).json({ error: "Documento no encontrado" });
     }
 
-    const actualizado = await documento.$query().patchAndFetch({ estado_id });
+    const actualizado = await documento.$query().patchAndFetch({ estadogf_id });
 
-    res.json({ mensaje: "Estado actualizado correctamente", documento: actualizado });
+    res.json({ mensaje: "Estado GF actualizado correctamente", documento: actualizado });
   } catch (error) {
-    console.error("Error al actualizar estado:", error);
-    res.status(500).json({ error: "Error al actualizar estado" });
+    console.error("Error al actualizar estado GF:", error);
+    res.status(500).json({ error: "Error al actualizar estado GF" });
+  }
+};
+
+// ✏️ Actualizar estado GC
+export const actualizarEstadoGC = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estadogc_id } = req.body;
+
+    const documento = await Documentos.query().findById(id);
+
+    if (!documento) {
+      return res.status(404).json({ error: "Documento no encontrado" });
+    }
+
+    const actualizado = await documento.$query().patchAndFetch({ estadogc_id });
+
+    res.json({ mensaje: "Estado GC actualizado correctamente", documento: actualizado });
+  } catch (error) {
+    console.error("Error al actualizar estado GC:", error);
+    res.status(500).json({ error: "Error al actualizar estado GC" });
   }
 };
 

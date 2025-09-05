@@ -27,3 +27,8 @@
   animation: fadeSlide 0.25s ease-out;
 }
 
+.firma-seleccionada {
+  background: rgba(255, 215, 0, 0.3); /* amarillo transparente */
+  border: 2px dashed orange;
+  padding: 4px;
+}
