@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
+import ConfirmacionModal from "../components/ConfirmacionModal";
 import api from "../services/api";
 import { toColombiaDate } from "../utils/fecha";
 import {
@@ -19,6 +20,11 @@ export default function Documentos() {
   const [menuAbierto, setMenuAbierto] = useState(null);
   const [dropdownPos, setDropdownPos] = useState("down");
   const [query, setQuery] = useState("");
+  const [modalFechasOpen, setModalFechasOpen] = useState(false);
+  const [modalFirmaOpen, setModalFirmaOpen] = useState(false);
+  const [errorFechas, setErrorFechas] = useState("");
+  const [errorFirma, setErrorFirma] = useState("");
+  const [loadingAccion, setLoadingAccion] = useState(false);
 
   // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
@@ -61,14 +67,18 @@ export default function Documentos() {
 
   const handleActivar = async () => {
     try {
+      setLoadingAccion(true);
+      setErrorFechas("");
       await api.post("/fechas", {
         fechaGF: fechaGF ? inputColombiaToUTC(fechaGF) : null,
         fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
       });
-      alert("Fechas guardadas ✅");
+      setModalFechasOpen(false);
     } catch (error) {
       console.error("Error guardando fechas:", error);
-      alert("❌ Error al guardar fechas");
+      setErrorFechas("No se pudieron guardar las fechas. Intenta nuevamente.");
+    } finally {
+      setLoadingAccion(false);
     }
   };
 
@@ -97,8 +107,7 @@ export default function Documentos() {
     cargarDatos();
   }, []);
 
-  // 📌 Cargar firma del backend
-  useEffect(() => {
+  // 📌 Cargar firma del backend (extract)
   const fetchFirma = async () => {
     try {
       const res = await api.get("/documentos/firma", { responseType: "blob" });
@@ -108,32 +117,33 @@ export default function Documentos() {
       console.error("❌ Error al cargar firma:", err);
     }
   };
-  fetchFirma();
-}, []);
-
+  useEffect(() => { fetchFirma(); }, []);
 
   // 📌 Subir/actualizar firma
-const handleFirmaUpload = async () => {
-  if (!file) {
-    alert("⚠️ Selecciona un archivo primero");
-    return;
-  }
-  try {
-    const formData = new FormData();
-    formData.append("firma", file);
+  const handleFirmaUpload = async () => {
+    if (!file) {
+      setErrorFirma("Selecciona un archivo primero.");
+      return;
+    }
+    try {
+      setLoadingAccion(true);
+      setErrorFirma("");
+      const formData = new FormData();
+      formData.append("firma", file);
 
-    await api.post("/documentos/firma", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    alert("✅ Firma actualizada correctamente");
-    window.location.reload(); // 👈 fuerza recarga y vuelve a pedir la firma
-  } catch (err) {
-    console.error("❌ Error subiendo firma:", err);
-    alert("Error al subir firma");
-  }
-};
-
+      await api.post("/documentos/firma", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      await fetchFirma();
+      setModalFirmaOpen(false);
+      setFile(null);
+    } catch (err) {
+      console.error("❌ Error subiendo firma:", err);
+      setErrorFirma("No se pudo subir la firma. Verifica el archivo e inténtalo nuevamente.");
+    } finally {
+      setLoadingAccion(false);
+    }
+  };
 
   // 📌 Cerrar menú desplegable
   useEffect(() => {
@@ -181,13 +191,9 @@ const handleFirmaUpload = async () => {
       {/* Botón Volver */}
       <Link
         to="/menu"
-
         className="lg:absolute top-4 md:top-6 right-4 md:right-6 flex items-center gap-1 bg-[var(--color-principal)] 
-                    text-white px-3 py-2 md:px-4 md:py-2 rounded-md shadow-md hover:bg-[var(--color-hover)] 
-                    transition text-sm mb-4 lg:mb-0 self-end lg:self-auto z-10"
-
-
-
+                  text-white px-3 py-2 md:px-4 md:py-2 rounded-md shadow-md hover:bg-[var(--color-hover)] 
+                  transition text-sm mb-4 lg:mb-0 self-end lg:self-auto z-10"
       >
         <ArrowLeft size={14} />
         <span className="hidden sm:inline">Volver</span>
@@ -228,8 +234,8 @@ const handleFirmaUpload = async () => {
                 </label>
                 <input
                   type="datetime-local"
-                  value={fechaGF || ""}           // <- string para input
-                  onChange={(e) => setFechaGF(e.target.value)} // <- guardas string
+                  value={fechaGF || ""}
+                  onChange={(e) => setFechaGF(e.target.value)}
                   className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
                 />
               </div>
@@ -246,7 +252,10 @@ const handleFirmaUpload = async () => {
                 />
               </div>
               <button
-                onClick={handleActivar}
+                onClick={() => {
+                  setErrorFechas("");
+                  setModalFechasOpen(true);
+                }}
                 className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
               >
                 Activar
@@ -267,16 +276,40 @@ const handleFirmaUpload = async () => {
                 <p className="text-sm text-gray-500">No tienes una firma cargada</p>
               )}
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setFile(e.target.files[0])}
-                className="w-full text-sm"
-              />
+              {/* Botón estilizado para subir archivo */}
+              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
+                <label
+                  htmlFor="firmaUpload"
+                  className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium shadow-sm border border-gray-300 transition w-full sm:w-auto text-center"
+                >
+                  Seleccionar archivo
+                </label>
+                <input
+                  id="firmaUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFile(e.target.files[0])}
+                  className="hidden"
+                />
 
+                {/* Nombre del archivo seleccionado */}
+                <span className="text-xs text-gray-500 flex-1 truncate text-center sm:text-left">
+                  {file ? file.name : "Ningún archivo seleccionado"}
+                </span>
+              </div>
+
+              {/* Botón actualizar/subir */}
               <div className="flex justify-end">
                 <button
-                  onClick={handleFirmaUpload}
+                  onClick={() => {
+                    if (!file) {
+                      setErrorFirma("Selecciona una imagen de firma antes de continuar.");
+                      setModalFirmaOpen(true);
+                      return;
+                    }
+                    setErrorFirma("");
+                    setModalFirmaOpen(true);
+                  }}
                   className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-4 py-2 rounded-md text-sm"
                 >
                   {firma ? "Actualizar Firma" : "Subir Firma"}
@@ -284,6 +317,7 @@ const handleFirmaUpload = async () => {
               </div>
             </div>
           </CardDesplegable>
+
       </Accordion.Root>
 
       {/* Columna derecha - Lista de Revisión */}
@@ -609,6 +643,22 @@ const handleFirmaUpload = async () => {
           </div>
         )}
       </div>
+
+      {/* Modales */}
+      <ConfirmacionModal
+        isOpen={modalFechasOpen}
+        onClose={() => { if (!loadingAccion) setModalFechasOpen(false); }}
+        onConfirm={() => { if (!loadingAccion) handleActivar(); }}
+        tipo="activarFechas"
+        error={errorFechas}
+      />
+      <ConfirmacionModal
+        isOpen={modalFirmaOpen}
+        onClose={() => { if (!loadingAccion) setModalFirmaOpen(false); }}
+        onConfirm={() => { if (!loadingAccion) handleFirmaUpload(); }}
+        tipo="actualizarFirma"
+        error={errorFirma}
+      />
     </div>
   );
 }

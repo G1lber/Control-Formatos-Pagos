@@ -1,6 +1,6 @@
 // src/components/ConfirmacionModal.jsx
 import { motion } from "framer-motion";
-import { CheckCircle, Edit, Trash } from "lucide-react";
+import { CheckCircle, Edit, Trash, FileCheck, CalendarClock } from "lucide-react";
 
 export default function ConfirmacionModal({
   isOpen,
@@ -29,10 +29,24 @@ export default function ConfirmacionModal({
     eliminar: {
       icon: <Trash className="w-10 h-10 sm:w-12 sm:h-12 text-red-600" />,
       titulo: "Confirmar Eliminación",
-      mensaje:
-        "¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.",
+      mensaje: "¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.",
       btn: "Eliminar",
       color: "bg-red-600 hover:bg-red-700",
+    },
+    // ✅ NUEVOS TIPOS
+    activarFechas: {
+      icon: <CalendarClock className="w-10 h-10 sm:w-12 sm:h-12 text-[var(--color-principal)]" />,
+      titulo: "Activar fechas límite",
+      mensaje: "¿Deseas guardar/activar las fechas límite de GF y GC?",
+      btn: "Activar",
+      color: "bg-[var(--color-principal)] hover:bg-[var(--color-hover)]",
+    },
+    actualizarFirma: {
+      icon: <FileCheck className="w-10 h-10 sm:w-12 sm:h-12 text-[var(--color-secundario)]" />,
+      titulo: "Actualizar firma digital",
+      mensaje: "¿Deseas subir/actualizar la firma digital?",
+      btn: "Actualizar",
+      color: "bg-[var(--color-secundario)] hover:bg-[var(--color-hover-secundario)]",
     },
   };
 
@@ -47,27 +61,21 @@ export default function ConfirmacionModal({
         transition={{ duration: 0.25, ease: "easeOut" }}
         className="bg-[var(--color-blanco)] rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 text-center"
       >
-        {/* Icono */}
         <div className="flex justify-center mb-3 sm:mb-4">{icon}</div>
-
-        {/* Título */}
         <h2 className="text-lg sm:text-xl font-bold text-[var(--color-texto)] mb-2">
           {titulo}
         </h2>
 
-        {/* Mensaje de error */}
         {error && (
           <p className="text-red-600 text-sm sm:text-base font-medium mb-3">
             {error}
           </p>
         )}
 
-        {/* Mensaje principal */}
         <p className="text-gray-600 text-sm sm:text-base mb-5 sm:mb-6">
           {mensaje}
         </p>
 
-        {/* Botones */}
         <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
           <button
             onClick={onClose}
