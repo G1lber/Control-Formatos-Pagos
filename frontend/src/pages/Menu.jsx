@@ -36,9 +36,9 @@ export default function HomeMenu() {
           <img
             src="/img/sena-logo.png"
             alt="Logo SENA"
-            className="w-12 h-12 object-contain"
+            className="w-13 h-13 object-contain"
           />
-          <h1 className="text-lg md:text-xl font-bold text-[var(--color-principal)] tracking-wide">
+          <h1 className="text-lg md:text-2xl font-bold text-[var(--color-principal)] tracking-wide">
             Bienvenido Administrador!!!
           </h1>
         </div>
