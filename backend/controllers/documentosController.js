@@ -11,6 +11,7 @@ import ImageModule from "docxtemplater-image-module-free";
 import * as cheerio from "cheerio";
 import sharp from "sharp";
 import { log } from "console";
+import Documento from "../models/Documentos.js";
 
 
 
@@ -416,23 +417,40 @@ export const obtenerDocumentos = async (req, res) => {
   }
 };
 
-// 🔎 Obtener un documento por ID
+// 🔎 Obtener un documento por Id
 export const obtenerDocumentoPorId = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const documento = await Documentos.query()
+    
+    // Consulta manual con join - solo seleccionamos el nombre
+    const documento = await Documento.query()
       .findById(id)
-      .withGraphFetched("[usuarioRef, estadoGF, estadoGC]");
+      .select('documentos.*', 'usuarios.nombre') // Solo nombre, sin numero_doc
+      .join('usuarios', 'documentos.usuario', 'usuarios.id')
+      .first();
 
     if (!documento) {
-      return res.status(404).json({ error: "Documento no encontrado" });
+      return res.status(404).json({ error: 'Documento no encontrado' });
     }
 
-    res.json(documento);
+    // Formatear la respuesta
+    const documentoConUsuario = {
+      ...documento,
+      usuarioRef: {
+        nombre: documento.nombre // Solo pasamos el nombre
+      }
+    };
+
+    // Eliminar campo temporal
+    delete documentoConUsuario.nombre;
+
+    res.json(documentoConUsuario);
   } catch (error) {
-    console.error("Error al obtener documento:", error);
-    res.status(500).json({ error: "Error al obtener documento" });
+    console.error('Error al obtener documento:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      details: error.message
+    });
   }
 };
 
