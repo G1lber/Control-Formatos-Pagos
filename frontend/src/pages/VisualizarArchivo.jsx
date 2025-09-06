@@ -221,8 +221,6 @@ useEffect(() => {
   </button>
 </header>
 
-
-
       {/* Contenido */}
       <main className="flex-1 flex justify-center items-center p-7">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-5xl flex flex-col overflow-hidden">

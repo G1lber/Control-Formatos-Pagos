@@ -41,9 +41,31 @@ router.post("/forgot-password", async (req, res) => {
       to: usuario.correo,                      // <<<<<< AQUÍ se usa el correo de la tabla usuarios
       subject: "Código de recuperación",
       html: `
-        <p>Hola ${usuario.nombre || ""},</p>
-        <p>Tu código de verificación es: <b style="font-size:18px">${codigo}</b></p>
-        <p>Expira en 10 minutos.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+  <!-- HEADER -->
+  <div style="background-color: #ffffff; padding: 16px; text-align: center;">
+    <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" style="width: 100px; margin-bottom: 8px;" />
+    <h2 style="color: #39A900; margin: 0;">Control de Pagos SENA</h2>
+  </div>
+
+  <!-- CUERPO -->
+  <div style="padding: 20px; color: #333;">
+    <p>Hola <b>${usuario.nombre || "Usuario"}</b>,</p>
+    <p>Has solicitado recuperar tu contraseña. Usa el siguiente código de verificación:</p>
+    <div style="text-align: center; margin: 24px 0;">
+      <span style="display: inline-block; font-size: 22px; font-weight: bold; color: #2E8C00; background: #f0fdf4; border: 2px dashed #39A900; padding: 12px 24px; border-radius: 6px;">
+        ${codigo}
+      </span>
+    </div>
+    <p style="color: #555;">⏰ Este código expira en <b>10 minutos</b>.</p>
+    <p style="margin-top: 20px;">Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="background-color: #f5f5f5; padding: 12px; text-align: center; font-size: 12px; color: #777;">
+    © ${new Date().getFullYear()} SENA - Control de Pagos
+  </div>
+</div>
       `,
     });
 
