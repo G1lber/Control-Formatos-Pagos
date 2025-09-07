@@ -177,6 +177,11 @@ export const firmarWord = async (req, res) => {
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
     fs.writeFileSync(filePath, buffer);
 
+    // ✅ Actualizar estadoGF a 2
+    await Documentos.query().findById(documentoId).patch({
+      estadogf_id: 2,
+    });
+
     // ✅ Responder rápido al cliente
     res.json({
       message: "✅ Documento firmado correctamente",
@@ -191,7 +196,6 @@ export const firmarWord = async (req, res) => {
           .withGraphFetched("usuarioRef");
 
         if (documento && documento.usuarioRef?.correo) {
-
           try {
             await sendMail(
               documento.usuarioRef.correo,
@@ -217,6 +221,7 @@ export const firmarWord = async (req, res) => {
     }
   }
 };
+
 
 
 // Firmar el archivo PDF
@@ -251,6 +256,7 @@ export const firmarDocumento = async (req, res) => {
     } else {
       throw new Error("La firma debe ser PNG o JPG");
     }
+
     // Insertar firma en la primera página
     const firstPage = pdfDoc.getPages()[0];
     firstPage.drawImage(firmaImage, {
@@ -263,6 +269,11 @@ export const firmarDocumento = async (req, res) => {
     // Guardar el PDF firmado
     const signedPdfBytes = await pdfDoc.save();
     fs.writeFileSync(filePath, signedPdfBytes);
+
+    // ✅ Actualizar estadoGF a 2
+    await Documentos.query().findById(documentoId).patch({
+      estadogf_id: 2,
+    });
 
     // Responder rápido al frontend
     res.json({
@@ -278,10 +289,40 @@ export const firmarDocumento = async (req, res) => {
           .withGraphFetched("usuarioRef");
 
         if (documento && documento.usuarioRef?.correo) {
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <!-- HEADER -->
+              <div style="background-color: #ffffff; padding: 16px; text-align: center;">
+                <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" style="width: 100px; margin-bottom: 8px;" />
+                <h2 style="color: #39A900; margin: 0;">Control de Pagos SENA</h2>
+              </div>
+
+              <!-- CUERPO -->
+              <div style="padding: 20px; color: #333;">
+                <p>Hola <b>${documento.usuarioRef.nombre || "Usuario"}</b>,</p>
+
+                <p>
+                  Nos complace informarte que tu documento GC <strong>"${file}"</strong> ha sido 
+                  <span style="color:#2E8C00; font-weight:600;">Aprobado y firmado correctamente</span>.
+                </p>
+
+                <p>📎 El documento aprobado se adjunta a este correo para tu referencia.</p>
+
+                <p style="margin-top: 20px;">Atentamente,<br><strong>Equipo Control de Pagos SENA</strong></p>
+              </div>
+
+              <!-- FOOTER -->
+              <div style="background-color: #f5f5f5; padding: 12px; text-align: center; font-size: 12px; color: #777;">
+                © ${new Date().getFullYear()} SENA - Control de Pagos<br>
+                Este es un mensaje automático. Si tienes dudas, responde a este correo o contacta al equipo de Control de Pagos.
+              </div>
+            </div>
+          `;
+
           await sendMail(
             documento.usuarioRef.correo,
-            "✅ Documento aprobado",
-            `Su documento ${file} ha sido aprobado y firmado correctamente.`,
+            "✅ Documento aprobado - Control de Pagos SENA",
+            emailHtml,
             [
               {
                 filename: file,
@@ -299,6 +340,7 @@ export const firmarDocumento = async (req, res) => {
     res.status(500).json({ error: "Error procesando la firma del documento" });
   }
 };
+
 
 
 // Subir Firma
