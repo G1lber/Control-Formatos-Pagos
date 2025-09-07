@@ -39,7 +39,7 @@ export default function HomeMenu() {
             className="w-13 h-13 object-contain"
           />
           <h1 className="text-lg md:text-2xl font-bold text-[var(--color-principal)] tracking-wide">
-            Bienvenido Administrador!!!
+            Bienvenido
           </h1>
         </div>
 
