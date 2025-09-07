@@ -190,17 +190,47 @@ export const firmarWord = async (req, res) => {
 
     // 📩 Enviar correo en segundo plano
     (async () => {
-      try {
+     try {
         const documento = await Documentos.query()
           .findById(documentoId)
           .withGraphFetched("usuarioRef");
 
         if (documento && documento.usuarioRef?.correo) {
+          const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <!-- HEADER -->
+            <div style="background-color: #ffffff; padding: 16px; text-align: center;">
+              <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" style="width: 100px; margin-bottom: 8px;" />
+              <h2 style="color: #39A900; margin: 0;">Control de Pagos SENA</h2>
+            </div>
+
+            <!-- CUERPO -->
+            <div style="padding: 20px; color: #333;">
+              <p>Hola <b>${documento.usuarioRef.nombre || "Usuario"}</b>,</p>
+
+              <p>
+                El documento GC <strong>"${file}"</strong> ha sido 
+                <span style="color:#2E8C00; font-weight:600;">aprobado y firmado correctamente.</span> ✅ 
+              </p>
+
+              <p>Puedes conservar el documento firmado que se adjunta a este correo.</p>
+
+              <p style="margin-top: 20px;">Atentamente,<br><strong>Equipo Control de Pagos SENA</strong></p>
+            </div>
+
+            <!-- FOOTER -->
+            <div style="background-color: #f5f5f5; padding: 12px; text-align: center; font-size: 12px; color: #777;">
+              © ${new Date().getFullYear()} SENA - Control de Pagos<br>
+              Este es un mensaje automático. Si tienes dudas, responde a este correo o contacta al equipo de Control de Pagos.
+            </div>
+          </div>
+          `;
+
           try {
             await sendMail(
               documento.usuarioRef.correo,
-              "✅ Documento aprobado",
-              `Su documento ${file} ha sido aprobado y firmado correctamente.`,
+              "✅ Documento aprobado - Control de Pagos SENA",
+              emailHtml,
               [{ filename: file, path: filePath }]
             );
             console.log("✅ Correo enviado con éxito");
