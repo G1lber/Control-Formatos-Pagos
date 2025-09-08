@@ -22,7 +22,8 @@ export async function validarNumeroPlanilla(rutaPDF) {
 
   if (apariciones < 2) {
     throw new Error(
-      `❌ El número de planilla ${numeroPlanilla} aparece ${apariciones} veces. Se esperaba al menos 2`
+      // `❌ El número de planilla ${numeroPlanilla} aparece ${apariciones} veces. Se esperaba al menos 2`
+      `❌ Revisa el el número de planilla ${numeroPlanilla}`
     );
   }
 
