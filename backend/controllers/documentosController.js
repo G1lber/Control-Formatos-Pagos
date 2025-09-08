@@ -12,6 +12,7 @@ import * as cheerio from "cheerio";
 import sharp from "sharp";
 import { log } from "console";
 import Documento from "../models/Documentos.js";
+import { validarNumeroPlanilla } from "../utils/validacionesGF.js";
 
 
 
@@ -417,6 +418,7 @@ export const obtenerFirma = (req, res) => {
 };
 
 // 📤 Subir documento
+
 export const subirDocumento = async (req, res) => {
   try {
     const { tipo } = req.body; // "1" o "2"
@@ -427,25 +429,41 @@ export const subirDocumento = async (req, res) => {
       return res.status(400).json({ error: "No se envió ningún archivo" });
     }
 
+    const rutaPDF = path.join(UPLOADS_DIR, archivo.filename);
+
+    // ⚡ Validar número de planilla si es tipo 1
+    if (tipo === "1") {
+      try {
+        const numeroPlanilla = await validarNumeroPlanilla(rutaPDF);
+        console.log(`✅ Número de planilla validado: ${numeroPlanilla}`);
+        // Opcional: podrías guardar este número en la BD
+      } catch (errValid) {
+        // ❌ Si falla la validación, borrar el archivo y salir
+        if (fs.existsSync(rutaPDF)) {
+          fs.unlinkSync(rutaPDF);
+        }
+        return res.status(400).json({ error: errValid.message });
+      }
+    }
+
+    // 🔹 Buscar si ya existe documento para ese usuario
     let documento = await Documentos.query().findOne({ usuario: usuario.id });
 
     if (!documento) {
-      // 🔹 Insertar nuevo documento dependiendo del tipo
       if (tipo === "1") {
         documento = await Documentos.query().insert({
           usuario: usuario.id,
           archivo1: archivo.filename,
-          estadogf_id: 1, // solo GF
+          estadogf_id: 1,
         });
       } else if (tipo === "2") {
         documento = await Documentos.query().insert({
           usuario: usuario.id,
           archivo2: archivo.filename,
-          estadogc_id: 1, // solo GC
+          estadogc_id: 1,
         });
       }
     } else {
-      // 🔹 Actualizar documento existente
       if (tipo === "1") {
         if (documento.archivo1) {
           const oldPath = path.join(UPLOADS_DIR, documento.archivo1);
@@ -453,7 +471,7 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo1: archivo.filename,
-          estadogf_id: 1, // ✅ solo cambia GF
+          estadogf_id: 1,
         });
       } else if (tipo === "2") {
         if (documento.archivo2) {
@@ -462,7 +480,7 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo2: archivo.filename,
-          estadogc_id: 1, // ✅ solo cambia GC
+          estadogc_id: 1,
         });
       }
     }
@@ -473,6 +491,7 @@ export const subirDocumento = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 // 📄 Listar todos los documentos
