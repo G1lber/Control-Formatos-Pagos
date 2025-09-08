@@ -180,7 +180,7 @@ export const firmarWord = async (req, res) => {
 
     // ✅ Actualizar estadoGF a 2
     await Documentos.query().findById(documentoId).patch({
-      estadogf_id: 2,
+      estadogc_id: 2,
     });
 
     // ✅ Responder rápido al cliente
