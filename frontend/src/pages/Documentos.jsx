@@ -9,6 +9,7 @@ import { toColombiaDate } from "../utils/fecha";
 import {
   toColombiaInputString,
   inputColombiaToUTC,
+  formatFechaColombia,
 } from "../utils/fecha";
 
 export default function Documentos() {
@@ -234,7 +235,7 @@ export default function Documentos() {
         className="flex flex-col gap-4 md:gap-6 w-full lg:w-1/3 min-w-0"
       >
         {/* Notificaciones */}
-        <CardDesplegable value="notificaciones" title="Notificaciones">
+        {/* <CardDesplegable value="notificaciones" title="Notificaciones">
           <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
             {documentos.map((n) => (
               <div
@@ -254,7 +255,7 @@ export default function Documentos() {
               </div>
             ))}
           </div>
-        </CardDesplegable>
+        </CardDesplegable> */}
         {/* Ajuste de Fechas */}
             <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
               <div>
@@ -397,10 +398,10 @@ export default function Documentos() {
               <thead>
                 <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
                   <th className="p-3">Usuario</th>
-                  <th className="p-3">Documento</th>
+                  <th className="p-3">N Documento</th>
                   <th className="p-3">Archivo GF</th>
                   <th className="p-3">Archivo GC</th>
-                  <th className="p-3">Fecha de inicio</th>
+                  <th className="p-3">Fecha de Actualizacion</th>
                   <th className="p-3">Estado GF</th>
                   <th className="p-3">Estado GC</th>
                   <th className="p-3">Acciones</th>
@@ -419,7 +420,7 @@ export default function Documentos() {
                       <td className="p-3">{n.usuarioRef?.numero_doc || "—"}</td>
                       <td className="p-3">{n.archivo1 ? "✔️" : "—"}</td>
                       <td className="p-3">{n.archivo2 ? "✔️" : "—"}</td>
-                      <td className="p-3">{n.fecha}</td>
+                      <td className="p-3">{formatFechaColombia(n.fecha)}</td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           n.estadoGF?.nombre_estado === "Pendiente" 
@@ -540,7 +541,7 @@ export default function Documentos() {
                     <span className="text-right truncate max-w-[60%]" title={n.usuarioRef?.nombre}>{n.usuarioRef?.nombre || "—"}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="font-semibold">Documento:</span>
+                    <span className="font-semibold">N Documento:</span>
                     <span>{n.usuarioRef?.numero_doc || "—"}</span>
                   </p>
                   <p className="flex justify-between">
@@ -552,8 +553,8 @@ export default function Documentos() {
                     <span>{n.archivo2 ? "✔️" : "—"}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="font-semibold">Fecha:</span>
-                    <span>{n.fecha}</span>
+                    <span className="font-semibold">Fecha de Actualizacion:</span>
+                    <span>{formatFechaColombia(n.fecha)}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="font-semibold">Estado GF:</span>
