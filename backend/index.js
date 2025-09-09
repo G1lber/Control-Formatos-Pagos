@@ -34,7 +34,11 @@ Model.knex(knex);
 // ✅ Servir estáticos (documentos subidos)
 app.use(
   "/api/uploads",
-  express.static(path.join(__dirname, "documentos-formatos"))
+  express.static(path.join(__dirname, "documentos-formatos")),
+);
+app.use(
+  "/documentos-formatos",
+  express.static(path.join(process.cwd(), "documentos-formatos"))
 );
 
 // rutas API

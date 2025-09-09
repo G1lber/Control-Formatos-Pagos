@@ -139,7 +139,16 @@ export default function VisualizarArchivo() {
 
       if (data?.url) {
         alert("✅ Documento firmado correctamente");
+
+        // 🟢 Forzar descarga automática
+        const link = document.createElement("a");
+        link.href = data.url;
+        link.download = ""; // 👈 Forzar descarga
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         navigate("/documentos");
+
       }
     } catch (err) {
       console.error("❌ Error firmando:", err);
