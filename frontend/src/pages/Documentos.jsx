@@ -352,6 +352,23 @@ export default function Documentos() {
           </div>
         </CardDesplegable>
 
+         {/* Descargar Excel */}
+        <CardDesplegable value="descargarExcel" title="Descargar Excel">
+          <p className="text-sm text-gray-700 mb-4">
+            Haz clic en el botón para descargar el archivo de Excel con el estado actual de la documentación.
+          </p>
+          <button
+            onClick={() => {
+              // Aquí se colocaría la lógica para iniciar la descarga del archivo.
+              // Podrías llamar a una función que haga una petición a tu API.
+              console.log('Iniciando la descarga del archivo Excel...');
+            }}
+            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+          >
+            Descargar Excel
+          </button>
+        </CardDesplegable>
+
       </Accordion.Root>
 
       {/* Columna derecha - Lista de Revisión */}
@@ -758,7 +775,7 @@ export default function Documentos() {
       {/* Modales */}
       <ConfirmacionModal
         isOpen={modalFechasOpen}
-        onClose={handleCloseModal} // 🔄 Usa la nueva función aquí
+        onClose={handleCloseModal}
         onConfirm={handleActivar}
         tipo="activarFechas"
         error={errorFechas}
