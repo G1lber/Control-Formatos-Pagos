@@ -176,10 +176,11 @@ export const firmarWord = async (req, res) => {
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
     fs.writeFileSync(filePath, buffer);
 
-    // Guardar como un nuevo archivo firmado
-    const signedFileName = `firmado_${file}`;
-    const signedFilePath = path.resolve("documentos-formatos", signedFileName);
-    fs.writeFileSync(signedFilePath, buffer);
+    // ✅ Responder rápido al cliente
+    res.json({
+      message: "✅ Documento firmado correctamente",
+      url: `/documentos-formatos/${file}`,
+    });
 
     // 📩 Enviar correo en segundo plano
     (async () => {
@@ -189,12 +190,13 @@ export const firmarWord = async (req, res) => {
           .withGraphFetched("usuarioRef");
 
         if (documento && documento.usuarioRef?.correo) {
+
           try {
             await sendMail(
               documento.usuarioRef.correo,
               "✅ Documento aprobado",
               `Su documento ${file} ha sido aprobado y firmado correctamente.`,
-              // [{ filename: file, path: filePath }]
+              [{ filename: file, path: filePath }]
             );
             console.log("✅ Correo enviado con éxito");
           } catch (err) {
@@ -207,12 +209,6 @@ export const firmarWord = async (req, res) => {
         console.error("❌ Error obteniendo documento para correo:", err);
       }
     })();
-    
-    // ✅ Solo una respuesta final al cliente
-    res.json({
-      message: "✅ Documento firmado correctamente",
-      url: `${process.env.API_URL}/documentos-formatos/${signedFileName}`,
-    });
   } catch (err) {
     console.error("❌ Error firmando documento Word:", err);
     if (!res.headersSent) {
