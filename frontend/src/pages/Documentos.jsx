@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
 import ConfirmacionModal from "../components/ConfirmacionModal";
@@ -11,6 +11,7 @@ import {
   inputColombiaToUTC,
   formatFechaColombia,
 } from "../utils/fecha";
+import ModalSinDocumento from "../components/ModalSinDocumento";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendiente");
@@ -26,15 +27,21 @@ export default function Documentos() {
   const [errorFechas, setErrorFechas] = useState("");
   const [errorFirma, setErrorFirma] = useState("");
   const [loadingAccion, setLoadingAccion] = useState(false);
+  const [modalSinDocumentoOpen, setModalSinDocumentoOpen] = useState(false);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [tipoDocumento, setTipoDocumento] = useState("");
 
   const [fechaGFOriginal, setFechaGFOriginal] = useState("");
-  const [fechaGCOriginal, setFechaGCOriginal] = useState("");
+  const [fechaGCOriginal, setFechaGCOriginal] = useState("");
 
   // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 12;
   const dropdownRefs = useRef({});
   const [tipoArchivo, setTipoArchivo] = useState("");
+
+  // Estado para guardar correos enviados 
+  const [correosEnviados, setCorreosEnviados] = useState({});
 
   // 📌 Firma
   const [firma, setFirma] = useState(null); // URL firma guardada
@@ -68,13 +75,13 @@ export default function Documentos() {
         const { data } = await api.get("/fechas");
         if (data) {
           const gf = data.fechaGF ? toColombiaInputString(data.fechaGF) : "";
-          const gc = data.fechaGC ? toColombiaInputString(data.fechaGC) : ""
+          const gc = data.fechaGC ? toColombiaInputString(data.fechaGC) : ""
           // 💾 Guarda las fechas iniciales
-          setFechaGF(gf);
-          setFechaGC(gc);
+          setFechaGF(gf);
+          setFechaGC(gc);
 
-          setFechaGFOriginal(gf);
-          setFechaGCOriginal(gc);
+          setFechaGFOriginal(gf);
+          setFechaGCOriginal(gc);
         }
       } catch (err) {
         console.error("❌ Error al cargar fechas:", err);
@@ -93,7 +100,7 @@ export default function Documentos() {
       });
       setModalFechasOpen(false);
       setFechaGFOriginal(fechaGF);
-      setFechaGCOriginal(fechaGC);
+      setFechaGCOriginal(fechaGC);
     } catch (error) {
       console.error("Error guardando fechas:", error);
       setErrorFechas("No se pudieron guardar las fechas. Intenta nuevamente.");
@@ -101,16 +108,27 @@ export default function Documentos() {
       setLoadingAccion(false);
     }
   };
-   // 🆕 Función para manejar el cierre del modal
-  const handleCloseModal = () => {
-    // 🚫 Evita cerrar si hay una acción en curso
-    if (loadingAccion) return;
+  
+  // 🆕 Función para manejar el cierre del modal
+  const handleCloseModal = () => {
+    // 🚫 Evita cerrar si hay una acción en curso
+    if (loadingAccion) return;
 
-    // ⏪ Restaura las fechas a sus valores originales
-    setFechaGF(fechaGFOriginal);
-    setFechaGC(fechaGCOriginal);
-    setModalFechasOpen(false);
-  };
+    // ⏪ Restaura las fechas a sus valores originales
+    setFechaGF(fechaGFOriginal);
+    setFechaGC(fechaGCOriginal);
+    setModalFechasOpen(false);
+  };
+  const handleCerrarModal = (usuario, tipoDocumento) => {
+  if (usuario && usuario.id) {
+    setCorreosEnviados((prev) => ({
+      ...prev,
+      [`${usuario.id}-${tipoDocumento}`]: true
+    }));
+  }
+  setModalSinDocumentoOpen(false);
+};
+  
   // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
   const indicePrimero = indiceUltimo - usuariosPorPagina;
@@ -215,6 +233,13 @@ export default function Documentos() {
     setMenuAbierto(key);
   };
 
+  // 🆕 Función para abrir modal de "Sin Documento"
+  const abrirModalSinDocumento = (usuario, tipo) => {
+    setUsuarioSeleccionado(usuario);
+    setTipoDocumento(tipo);
+    setModalSinDocumentoOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] p-4 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 relative">
     
@@ -234,119 +259,98 @@ export default function Documentos() {
         type="multiple"
         className="flex flex-col gap-4 md:gap-6 w-full lg:w-1/3 min-w-0"
       >
-        {/* Notificaciones */}
-        {/* <CardDesplegable value="notificaciones" title="Notificaciones">
-          <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
-            {documentos.map((n) => (
-              <div
-                key={n.id}
-                className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm truncate">
-                    <strong>{n.usuarioRef?.nombre}</strong> subió{" "}
-                    <em>{n.archivo1 || n.archivo2 || "Sin archivo"}</em>
-                  </p>
-                  <small className="text-xs text-gray-500">{n.fecha}</small>
-                </div>
-                <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg flex-shrink-0 ml-2">
-                  Revisar
-                </button>
-              </div>
-            ))}
-          </div>
-        </CardDesplegable> */}
         {/* Ajuste de Fechas */}
-            <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha límite GF
-                </label>
-                <input
-                  type="datetime-local"
-                  value={fechaGF || ""}
-                  onChange={(e) => setFechaGF(e.target.value)}
-                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-                />
-              </div>
+        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GF
+            </label>
+            <input
+              type="datetime-local"
+              value={fechaGF || ""}
+              onChange={(e) => setFechaGF(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha límite GC
-                </label>
-                <input
-                  type="datetime-local"
-                  value={fechaGC || ""}
-                  onChange={(e) => setFechaGC(e.target.value)}
-                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GC
+            </label>
+            <input
+              type="datetime-local"
+              value={fechaGC || ""}
+              onChange={(e) => setFechaGC(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setErrorFechas("");
+              setModalFechasOpen(true);
+            }}
+            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+          >
+            Activar
+          </button>
+        </CardDesplegable>
+        
+        <CardDesplegable value="firma" title="Firma Digital">
+          <div className="p-4 space-y-4">
+            {firma ? (
+              <div className="flex flex-col items-center">
+                <img
+                  src={firma}
+                  alt="Firma actual"
+                  className="h-24 object-contain border rounded-md p-2 bg-white"
                 />
+                <p className="text-xs text-gray-500 mt-2">Firma actual</p>
               </div>
+            ) : (
+              <p className="text-sm text-gray-500">No tienes una firma cargada</p>
+            )}
+
+            {/* Botón estilizado para subir archivo */}
+            <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
+              <label
+                htmlFor="firmaUpload"
+                className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium shadow-sm border border-gray-300 transition w-full sm:w-auto text-center"
+              >
+                Seleccionar archivo
+              </label>
+              <input
+                id="firmaUpload"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="hidden"
+              />
+
+              {/* Nombre del archivo seleccionado */}
+              <span className="text-xs text-gray-500 flex-1 truncate text-center sm:text-left">
+                {file ? file.name : "Ningún archivo seleccionado"}
+              </span>
+            </div>
+
+            {/* Botón actualizar/subir */}
+            <div className="flex justify-end">
               <button
                 onClick={() => {
-                  setErrorFechas("");
-                  setModalFechasOpen(true);
-                }}
-                className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
-              >
-                Activar
-              </button>
-            </CardDesplegable>
-           <CardDesplegable value="firma" title="Firma Digital">
-            <div className="p-4 space-y-4">
-              {firma ? (
-                <div className="flex flex-col items-center">
-                  <img
-                    src={firma}
-                    alt="Firma actual"
-                    className="h-24 object-contain border rounded-md p-2 bg-white"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">Firma actual</p>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No tienes una firma cargada</p>
-              )}
-
-              {/* Botón estilizado para subir archivo */}
-              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
-                <label
-                  htmlFor="firmaUpload"
-                  className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium shadow-sm border border-gray-300 transition w-full sm:w-auto text-center"
-                >
-                  Seleccionar archivo
-                </label>
-                <input
-                  id="firmaUpload"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFile(e.target.files[0])}
-                  className="hidden"
-                />
-
-                {/* Nombre del archivo seleccionado */}
-                <span className="text-xs text-gray-500 flex-1 truncate text-center sm:text-left">
-                  {file ? file.name : "Ningún archivo seleccionado"}
-                </span>
-              </div>
-
-              {/* Botón actualizar/subir */}
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    if (!file) {
-                      setErrorFirma("Selecciona una imagen de firma antes de continuar.");
-                      setModalFirmaOpen(true);
-                      return;
-                    }
-                    setErrorFirma("");
+                  if (!file) {
+                    setErrorFirma("Selecciona una imagen de firma antes de continuar.");
                     setModalFirmaOpen(true);
-                  }}
-                  className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-4 py-2 rounded-md text-sm"
-                >
-                  {firma ? "Actualizar Firma" : "Subir Firma"}
-                </button>
-              </div>
+                    return;
+                  }
+                  setErrorFirma("");
+                  setModalFirmaOpen(true);
+                }}
+                className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-4 py-2 rounded-md text-sm"
+              >
+                {firma ? "Actualizar Firma" : "Subir Firma"}
+              </button>
             </div>
-          </CardDesplegable>
+          </div>
+        </CardDesplegable>
 
       </Accordion.Root>
 
@@ -422,26 +426,53 @@ export default function Documentos() {
                       <td className="p-3">{n.archivo2 ? "✔️" : "—"}</td>
                       <td className="p-3">{formatFechaColombia(n.fecha)}</td>
                       <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          n.estadoGF?.nombre_estado === "Pendiente" 
-                            ? "bg-yellow-100 text-yellow-800" 
-                            : n.estadoGF?.nombre_estado === "Revisado"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-gray-800"
-                        }`}>
-                          {n.estadoGF?.nombre_estado}
-                        </span>
+                        {n.estadoGF?.nombre_estado === "Sin Documento" ? (
+                          <button
+                            onClick={() => abrirModalSinDocumento(n, "GF")}
+                            className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                            title="Hacer clic para más información"
+                          >
+                            {correosEnviados[`${n.id}-GF`] && (
+                              <img
+                                src="https://cdn-icons-png.flaticon.com/512/561/561127.png" // ejemplo de ícono de carta
+                                  alt="Correo enviado"
+                                  className="absolute -top-1 -right-1 w-4 h-4"
+                              />
+                            )}
+                            Sin Documento
+                          </button>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            n.estadoGF?.nombre_estado === "Pendiente" 
+                              ? "bg-yellow-100 text-yellow-800" 
+                              : n.estadoGF?.nombre_estado === "Revisado"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-gray-800"
+                          }`}>
+                            {n.estadoGF?.nombre_estado}
+                          </span>
+                        )}
                       </td>
                       <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          n.estadoGC?.nombre_estado === "Pendiente" 
-                            ? "bg-yellow-100 text-yellow-800" 
-                            : n.estadoGC?.nombre_estado === "Revisado"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-gray-800"
-                        }`}>
-                          {n.estadoGC?.nombre_estado}
-                        </span>
+                        {n.estadoGC?.nombre_estado === "Sin Documento" ? (
+                          <button
+                            onClick={() => abrirModalSinDocumento(n, "GC")}
+                            className="px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                            title="Hacer clic para más información"
+                          >
+                            Sin Documento
+                          </button>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            n.estadoGC?.nombre_estado === "Pendiente" 
+                              ? "bg-yellow-100 text-yellow-800" 
+                              : n.estadoGC?.nombre_estado === "Revisado"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-gray-800"
+                          }`}>
+                            {n.estadoGC?.nombre_estado}
+                          </span>
+                        )}
                       </td>
                       <td className="p-3">
                         <div
@@ -558,27 +589,54 @@ export default function Documentos() {
                   </p>
                   <p className="flex justify-between">
                     <span className="font-semibold">Estado GF:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      n.estadoGF?.nombre_estado === "Pendiente"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : n.estadoGF?.nombre_estado === "Revisado"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-gray-800"
-                    }`}>
-                      {n.estadoGF?.nombre_estado}
-                    </span>
+                    {n.estadoGF?.nombre_estado === "Sin Documento" ? (
+                      <button
+                        onClick={() => abrirModalSinDocumento(n, "GC")}
+                        className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                        title="Hacer clic para más información"
+                      >
+                        {correosEnviados[`${n.id}-GC`] && (
+                          <img
+    src="https://cdn-icons-png.flaticon.com/512/561/561127.png" // ejemplo de ícono de carta
+    alt="Correo enviado"
+    className="absolute -top-1 -right-1 w-4 h-4"
+  />
+                        )}
+                        Sin Documento
+                      </button>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        n.estadoGF?.nombre_estado === "Pendiente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : n.estadoGF?.nombre_estado === "Revisado"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-gray-800"
+                      }`}>
+                        {n.estadoGF?.nombre_estado}
+                      </span>
+                    )}
                   </p>
                   <p className="flex justify-between">
                     <span className="font-semibold">Estado GC:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      n.estadoGC?.nombre_estado === "Pendiente"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : n.estadoGC?.nombre_estado === "Revisado"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-gray-800"
-                    }`}>
-                      {n.estadoGC?.nombre_estado}
-                    </span>
+                    {n.estadoGC?.nombre_estado === "Sin Documento" ? (
+                      <button
+                        onClick={() => abrirModalSinDocumento(n, "GC")}
+                        className="px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                        title="Hacer clic para más información"
+                      >
+                        Sin Documento
+                      </button>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        n.estadoGC?.nombre_estado === "Pendiente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : n.estadoGC?.nombre_estado === "Revisado"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-gray-800"
+                      }`}>
+                        {n.estadoGC?.nombre_estado}
+                      </span>
+                    )}
                   </p>
                   <div className="pt-2 flex justify-center relative w-full">
                     {n.archivo1 && n.archivo2 ? (
@@ -701,7 +759,7 @@ export default function Documentos() {
       <ConfirmacionModal
         isOpen={modalFechasOpen}
         onClose={handleCloseModal} // 🔄 Usa la nueva función aquí
-        onConfirm={handleActivar}
+        onConfirm={handleActivar}
         tipo="activarFechas"
         error={errorFechas}
       />
@@ -711,6 +769,13 @@ export default function Documentos() {
         onConfirm={() => { if (!loadingAccion) handleFirmaUpload(); }}
         tipo="actualizarFirma"
         error={errorFirma}
+      />
+
+      <ModalSinDocumento
+        isOpen={modalSinDocumentoOpen}
+        onClose={() => handleCerrarModal(usuarioSeleccionado, tipoDocumento)}
+        usuario={usuarioSeleccionado}
+        tipoDocumento={tipoDocumento}
       />
     </div>
   );

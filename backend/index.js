@@ -11,6 +11,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import rechazoRoutes from "./routes/rechazo.js";
 import fechasRoutes from "./routes/fechas.js";
+import recordatorioRoutes from "./routes/recordatorio.js";
 
 dotenv.config();
 const app = express();
@@ -43,6 +44,7 @@ app.use("/api/usuarios", userRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
 app.use("/api/rechazo", rechazoRoutes);
+app.use("/api/recordatorio", recordatorioRoutes); 
 
 // nueva ruta para olvidé contraseña
 app.use("/auth", authRoutes);
@@ -50,4 +52,3 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
 });
-
