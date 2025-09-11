@@ -13,6 +13,7 @@ import sharp from "sharp";
 import { log } from "console";
 import Documento from "../models/Documentos.js";
 import { validarNumeroPlanilla } from "../utils/validacionesGF.js";
+import { validarNombreArchivo } from "../utils/validacionNombreArchivo.js";
 
 
 
@@ -431,17 +432,21 @@ export const subirDocumento = async (req, res) => {
 
     const rutaPDF = path.join(UPLOADS_DIR, archivo.filename);
 
-    // ⚡ Validar número de planilla si es tipo 1
+    // ⚡ Validar siempre el nombre del archivo
+    try {
+      validarNombreArchivo(archivo.filename, usuario.numero_doc);
+    } catch (errValidNombre) {
+      if (fs.existsSync(rutaPDF)) fs.unlinkSync(rutaPDF);
+      return res.status(400).json({ error: errValidNombre.message });
+    }
+
+    // ⚡ Validar número de planilla solo si es tipo 1 (GF)
     if (tipo === "1") {
       try {
         const numeroPlanilla = await validarNumeroPlanilla(rutaPDF);
         console.log(`✅ Número de planilla validado: ${numeroPlanilla}`);
-        // Opcional: podrías guardar este número en la BD
       } catch (errValid) {
-        // ❌ Si falla la validación, borrar el archivo y salir
-        if (fs.existsSync(rutaPDF)) {
-          fs.unlinkSync(rutaPDF);
-        }
+        if (fs.existsSync(rutaPDF)) fs.unlinkSync(rutaPDF);
         return res.status(400).json({ error: errValid.message });
       }
     }
