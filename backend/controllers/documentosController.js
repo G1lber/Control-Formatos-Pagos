@@ -11,6 +11,13 @@ import ImageModule from "docxtemplater-image-module-free";
 import * as cheerio from "cheerio";
 import sharp from "sharp";
 import { log } from "console";
+import officeToPdf from "office-to-pdf";
+import { exec } from "child_process";
+import util from "util";
+import docxConverter from "docx-pdf";
+
+const execAsync = util.promisify(exec);
+
 
 
 
@@ -140,11 +147,21 @@ function getImageModule() {
   });
 }
 
+import ILovePDFApi from '@ilovepdf/ilovepdf-nodejs';
+
+// Inicializar cliente de iLovePDF
+const ilovepdf = new ILovePDFApi(
+  "project_public_key",  // puedes dejarlo fijo
+  process.env.ILOVEPDF_SECRET // lo importante es la secret key en .env
+);
+
+
 export const firmarWord = async (req, res) => {
   let filePath;
   let firmaPath;
+
   try {
-    const { file, documentoId } = req.body; // Validar entrada
+    const { file, documentoId } = req.body;
 
     if (!file || !documentoId) {
       return res.status(400).json({ error: "Faltan datos requeridos" });
@@ -153,7 +170,7 @@ export const firmarWord = async (req, res) => {
     filePath = path.resolve("documentos-formatos", file);
     firmaPath = path.resolve("firma", "firma.png");
 
-    // Validar existencia de archivos
+    // Validaciones
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: "Documento no encontrado" });
     }
@@ -161,7 +178,7 @@ export const firmarWord = async (req, res) => {
       return res.status(404).json({ error: "No hay firma registrada" });
     }
 
-    // Cargar y procesar el archivo Word
+    // Insertar firma en Word
     const content = fs.readFileSync(filePath, "binary");
     const zip = new PizZip(content);
 
@@ -176,13 +193,31 @@ export const firmarWord = async (req, res) => {
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
     fs.writeFileSync(filePath, buffer);
 
-    // ✅ Responder rápido al cliente
-    res.json({
-      message: "✅ Documento firmado correctamente",
-      url: `/documentos-formatos/${file}`,
-    }); 
+    // Convertir a PDF usando iLovePDF API
+    const publicKey = process.env.ILOVEPDF_PUBLIC_KEY;   // asegúrate de tener aquí tus claves
+    const secretKey = process.env.ILOVEPDF_SECRET_KEY;
 
-    // 📩 Enviar correo en segundo plano
+    const ilovepdf = new ILovePDFApi(publicKey, secretKey);
+    const task = ilovepdf.newTask("officepdf");
+    await task.start();
+
+    // Agregar el archivo Word firmado
+    await task.addFile(filePath);
+    await task.process();
+
+    const pdfPath = filePath.replace(/\.docx$/, ".pdf");
+    await task.download(pdfPath);
+
+    // Eliminar el Word original
+    fs.unlinkSync(filePath);
+
+    // Responder con el PDF
+    res.json({
+      message: "✅ Documento firmado y convertido a PDF",
+      urlPdf: `/documentos-formatos/${path.basename(pdfPath)}`,
+    });
+
+    // Enviar correo (solo con PDF)
     (async () => {
       try {
         const documento = await Documentos.query()
@@ -190,13 +225,12 @@ export const firmarWord = async (req, res) => {
           .withGraphFetched("usuarioRef");
 
         if (documento && documento.usuarioRef?.correo) {
-
           try {
             await sendMail(
               documento.usuarioRef.correo,
               "✅ Documento aprobado",
-              `Su documento ${file} ha sido aprobado y firmado correctamente.`,
-              [{ filename: file, path: filePath }]
+              `Su documento ${path.basename(pdfPath)} ha sido aprobado y firmado correctamente.`,
+              [{ filename: path.basename(pdfPath), path: pdfPath }]
             );
             console.log("✅ Correo enviado con éxito");
           } catch (err) {
@@ -209,10 +243,11 @@ export const firmarWord = async (req, res) => {
         console.error("❌ Error obteniendo documento para correo:", err);
       }
     })();
+
   } catch (err) {
-    console.error("❌ Error firmando documento Word:", err);
+    console.error("❌ Error firmando/convirtiendo documento:", err);
     if (!res.headersSent) {
-      res.status(500).json({ error: "Error firmando documento Word" });
+      res.status(500).json({ error: "Error firmando/convirtiendo documento" });
     }
   }
 };
