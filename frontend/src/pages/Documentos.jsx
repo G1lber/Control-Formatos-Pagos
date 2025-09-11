@@ -474,15 +474,22 @@ export default function Documentos() {
                         {n.estadoGC?.nombre_estado === "Sin Documento" ? (
                           <button
                             onClick={() => abrirModalSinDocumento(n, "GC")}
-                            className="px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                            className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
                             title="Hacer clic para más información"
                           >
+                            {correosEnviados[`${n.id}-GC`] && (
+                              <img
+                                src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                                alt="Correo enviado"
+                                className="absolute -top-1 -right-1 w-4 h-4"
+                              />
+                            )}
                             Sin Documento
                           </button>
                         ) : (
                           <span className={`px-2 py-1 rounded-full text-xs ${
-                            n.estadoGC?.nombre_estado === "Pendiente" 
-                              ? "bg-yellow-100 text-yellow-800" 
+                            n.estadoGC?.nombre_estado === "Pendiente"
+                              ? "bg-yellow-100 text-yellow-800"
                               : n.estadoGC?.nombre_estado === "Revisado"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-gray-800"
@@ -491,6 +498,7 @@ export default function Documentos() {
                           </span>
                         )}
                       </td>
+
                       <td className="p-3">
                         <div
                           className="relative"
@@ -608,19 +616,21 @@ export default function Documentos() {
                     <span className="font-semibold">Estado GF:</span>
                     {n.estadoGF?.nombre_estado === "Sin Documento" ? (
                       <button
-                        onClick={() => abrirModalSinDocumento(n, "GC")}
+                        onClick={() => abrirModalSinDocumento(n, "GF")}
                         className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
                         title="Hacer clic para más información"
                       >
-                        {correosEnviados[`${n.id}-GC`] && (
+                        {correosEnviados[`${n.id}-GF`] && (
                           <img
-    src="https://cdn-icons-png.flaticon.com/512/561/561127.png" // ejemplo de ícono de carta
-    alt="Correo enviado"
-    className="absolute -top-1 -right-1 w-4 h-4"
-  />
+                            src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                            alt="Correo enviado"
+                            className="absolute -top-1 -right-1 w-4 h-4"
+                          />
                         )}
                         Sin Documento
                       </button>
+
+
                     ) : (
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         n.estadoGF?.nombre_estado === "Pendiente"
@@ -636,13 +646,21 @@ export default function Documentos() {
                   <p className="flex justify-between">
                     <span className="font-semibold">Estado GC:</span>
                     {n.estadoGC?.nombre_estado === "Sin Documento" ? (
-                      <button
-                        onClick={() => abrirModalSinDocumento(n, "GC")}
-                        className="px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
-                        title="Hacer clic para más información"
-                      >
-                        Sin Documento
-                      </button>
+                    <button
+                      onClick={() => abrirModalSinDocumento(n, "GC")}
+                      className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                      title="Hacer clic para más información"
+                    >
+                      {correosEnviados[`${n.id}-GC`] && (
+                        <img
+                          src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                          alt="Correo enviado"
+                          className="absolute -top-1 -right-1 w-4 h-4"
+                        />
+                      )}
+                      Sin Documento
+                    </button>
+
                     ) : (
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         n.estadoGC?.nombre_estado === "Pendiente"
