@@ -1,0 +1,29 @@
+Nombre en el excel            y     Nombre en el GF
+
+Número de contrato SECOP II   =     Nº del contrato: 7372194/2025
+
+Nombre Razón social           =     Nombre del Usuario Base de Datos
+
+Tipo de identificacion        =     Crear en la base de datos tipo de identificacion    CC Ti CE LM
+
+No de identificacion          =     Numero de docuemtno en base de datos 
+
+Valor Obligación              =     Valor Bruto Pago: $ 4.599.511,00
+
+Nº Compromiso SIIF 11125      =     Numero de compromiso SIIF
+
+$ Base Ica                    =     Base retención en la fuente a titulo de ICA 4.599.511,00
+
+$ICA                          =     Base retención en la fuente a titulo de ICA 4.599.511,00
+
+$Base Retefuente              =     Base retención en la fuente a titulo de RENTA 2.696.860,00
+
+$Retefuente                   =     Menos Retención en la Fuente 0,00
+
+$Embargo                      =     Descuentos de embargo (Si tiene) 0,00
+
+No planilla seguridad social  =     Nº Planilla PILA, o , Nº Radicación pago SS ---------- 7958525340  Ya lo estamos Validando solo seria guardarlo
+
+Fecha aprobación en SECOP II  =     Este se deja en blanco para despues ser rellenado 
+
+Observación                   =     Esta tambien ira en blanco, no lo encontre en el GF
