@@ -136,17 +136,15 @@ export default function VisualizarArchivo() {
         documentoId,
         posicion: posicionFirma,
       });
-      if (data?.urlPdf) {
+
+      if (data?.url) {
         alert("✅ Documento firmado correctamente");
-
         const link = document.createElement("a");
-        link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.urlPdf}`;
-        link.download = data.urlPdf.split("/").pop(); // nombre del archivo PDF
+        link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.url}`;
+        link.download = data.url.split("/").pop(); // nombre del archivo
         link.click();
-
         navigate("/documentos");
       }
-
     } catch (err) {
       console.error("❌ Error firmando:", err);
       alert("Error al firmar el documento");
