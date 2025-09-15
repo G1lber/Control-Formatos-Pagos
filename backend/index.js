@@ -38,6 +38,12 @@ app.use(
   express.static(path.join(__dirname, "documentos-formatos"))
 );
 
+app.use(
+  "/documentos-formatos",
+  express.static(path.join(__dirname, "documentos-formatos"))
+);
+
+
 // rutas API
 app.use("/api/fechas", fechasRoutes);
 app.use("/api/usuarios", userRoutes);
