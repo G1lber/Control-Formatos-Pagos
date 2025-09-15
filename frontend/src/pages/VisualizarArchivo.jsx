@@ -210,14 +210,24 @@ export default function VisualizarArchivo() {
         posicion: posicionFirma,
       });
 
-      if (data?.url) {
-        alert("✅ Documento firmado correctamente");
-        const link = document.createElement("a");
-        link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.url}`;
-        link.download = data.url.split("/").pop(); // nombre del archivo
-        link.click();
-        navigate("/documentos");
-      }
+
+    if (data?.url) {
+      alert("✅ Documento firmado correctamente");
+      const link = document.createElement("a");
+      link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.url}`;
+      link.download = data.url.split("/").pop(); // nombre del archivo
+      link.click();
+      navigate("/documentos");
+
+      if (data?.url || data?.ok) { // <-- ERROR: Esta línea es el problema
+        setSuccessAlert({
+          isOpen: true,
+          mensaje: "El documento ha sido firmado exitosamente y enviado al usuario.",
+        });
+      } else {
+        // caso en que backend responda distinto
+        mostrarAlerta("success", "Operación completada correctamente.");
+      }
     } catch (err) {
       console.error("Error firmando documento:", err);
       mostrarAlerta("error", "Error al firmar el documento");
