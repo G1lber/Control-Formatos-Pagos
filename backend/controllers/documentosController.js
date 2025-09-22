@@ -545,14 +545,19 @@ export const subirDocumento = async (req, res) => {
   }
 };
 
-
+const tiposDocMap = {
+  1: "CC",
+  2: "TI",
+  3: "CE",
+  4: "PAS",
+}
 
 export const exportarDatosGFRevisados = async (req, res) => {
   try {
-    // 🔹 Buscar documentos con estado revisado
-    const documentos = await Documentos.query()
-      .where("estadogf_id", 2) // 2 = Revisado (puedes cambiar a dinámico si quieres)
-      .withGraphFetched("datosGF");
+    // 🔹 Buscar documentos con estado revisado + relaciones usuario y datosGF
+    const documentos = await Documento.query()
+      .where("estadogf_id", 2) // 2 = Revisado
+      .withGraphFetched("[datosGF, usuarioRef.tipoDocumento]"); 
 
     if (!documentos.length) {
       return res.status(404).json({ error: "No hay documentos revisados." });
@@ -564,23 +569,42 @@ export const exportarDatosGFRevisados = async (req, res) => {
 
     // Encabezados
     worksheet.columns = [
-      { header: "Número de contrato SECOP II", key: "contrato_SECOP", width: 20 },
+      { header: "Número de contrato SECOP II", key: "contrato_SECOP", width: 25 },
+      { header: "Nombre Razón social", key: "nombre_usuario", width: 30 },
+      { header: "Tipo identificación", key: "tipo_doc_usuario", width: 20 },
+      { header: "No de identificación", key: "num_doc_usuario", width: 25 },
+
       { header: "Valor Obligación", key: "valor_obligacion", width: 20 },
-      { header: "Numero de compromiso SIIF", key: "compromiso_SIIF", width: 20 },
+      { header: "Numero de compromiso SIIF", key: "compromiso_SIIF", width: 25 },
       { header: "$ Base Ica", key: "base_ica", width: 20 },
       { header: "$ICA", key: "ICA", width: 20 },
-      { header: "$Base Retefuente", key: "base_retefuente", width: 20 },
+      { header: "$Base Retefuente", key: "base_retefuente", width: 25 },
       { header: "$Retefuente", key: "retefuente", width: 20 },
       { header: "$Embargo", key: "embargo", width: 20 },
-      { header: "No planilla seguridad social ", key: "numero_planilla", width: 20 },
+      { header: "No planilla seguridad social", key: "numero_planilla", width: 25 },
     ];
 
     // Agregar filas
     documentos.forEach((doc) => {
-      if (doc.datosGF) {
-        worksheet.addRow(doc.datosGF);
-      }
+      worksheet.addRow({
+        // 🔹 Datos del usuario
+        nombre_usuario: doc.usuarioRef ? doc.usuarioRef.nombre : "-",
+        tipo_doc_usuario: doc.usuarioRef ? tiposDocMap[doc.usuarioRef.tipo_doc] ?? "-" : "-",
+        num_doc_usuario: doc.usuarioRef ? doc.usuarioRef.numero_doc : "-", // asegúrate del nombre del campo en tu tabla usuarios
+
+        // 🔹 Datos de datosGF
+        contrato_SECOP: doc.datosGF?.contrato_SECOP,
+        valor_obligacion: doc.datosGF?.valor_obligacion,
+        compromiso_SIIF: doc.datosGF?.compromiso_SIIF,
+        base_ica: doc.datosGF?.base_ica,
+        ICA: doc.datosGF?.ICA,
+        base_retefuente: doc.datosGF?.base_retefuente,
+        retefuente: doc.datosGF?.retefuente,
+        embargo: doc.datosGF?.embargo,
+        numero_planilla: doc.datosGF?.numero_planilla,
+      });
     });
+    
 
     // Configurar cabeceras para descarga
     res.setHeader(
