@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
+import DatosGF from "../models/DatosGF.js";
 import { PDFDocument, rgb } from "pdf-lib";
 import { sendMail } from "../config/mailer.js"
 import PizZip from "pizzip";
@@ -14,6 +15,7 @@ import { log } from "console";
 import Documento from "../models/Documentos.js";
 import { validarNumeroPlanilla } from "../utils/validacionesGF.js";
 import { validarNombreArchivo } from "../utils/validacionNombreArchivo.js";
+import { extraerDatosContrato } from "../utils/datosGF.js";
 
 
 
@@ -440,11 +442,51 @@ export const subirDocumento = async (req, res) => {
       return res.status(400).json({ error: errValidNombre.message });
     }
 
-    // ⚡ Validar número de planilla solo si es tipo 1 (GF)
+    let datosGFid = null;
+    let numeroPlanilla = null;
+
+    // ⚡ Validar número de planilla y extraer datos si es tipo 1 (GF)
     if (tipo === "1") {
       try {
-        const numeroPlanilla = await validarNumeroPlanilla(rutaPDF);
+        numeroPlanilla = await validarNumeroPlanilla(rutaPDF);
         console.log(`✅ Número de planilla validado: ${numeroPlanilla}`);
+
+        // Extraer datos del PDF
+        const datosExtraidos = await extraerDatosContrato(rutaPDF);
+
+        // Buscar si el usuario ya tiene documento con datosGF asociado
+        let documentoExistente = await Documentos.query().findOne({ usuario: usuario.id });
+
+        if (documentoExistente && documentoExistente.datosgf_id) {
+          // 🔹 Actualizar el registro existente en datosGF
+          const updatedGF = await DatosGF.query()
+            .patchAndFetchById(documentoExistente.datosgf_id, {
+              contrato_SECOP: datosExtraidos.numeroContrato,
+              valor_obligacion: datosExtraidos.valorBruto,
+              compromiso_SIIF: datosExtraidos.compromisoSIIF,
+              base_ica: datosExtraidos.baseICA,
+              ICA: datosExtraidos.ICA,
+              base_retefuente: datosExtraidos.baseRenta,
+              retefuente: datosExtraidos.menosReteFuente,
+              embargo: datosExtraidos.embargo,
+              numero_planilla: numeroPlanilla,
+            });
+          datosGFid = updatedGF.id;
+        } else {
+          // 🔹 Crear solo si no existe antes
+          const newGF = await DatosGF.query().insert({
+            contrato_SECOP: datosExtraidos.numeroContrato,
+            valor_obligacion: datosExtraidos.valorBruto,
+            compromiso_SIIF: datosExtraidos.compromisoSIIF,
+            base_ica: datosExtraidos.baseICA,
+            ICA: datosExtraidos.ICA,
+            base_retefuente: datosExtraidos.baseRenta,
+            retefuente: datosExtraidos.menosReteFuente,
+            embargo: datosExtraidos.embargo,
+            numero_planilla: numeroPlanilla,
+          });
+          datosGFid = newGF.id;
+        }
       } catch (errValid) {
         if (fs.existsSync(rutaPDF)) fs.unlinkSync(rutaPDF);
         return res.status(400).json({ error: errValid.message });
@@ -460,6 +502,7 @@ export const subirDocumento = async (req, res) => {
           usuario: usuario.id,
           archivo1: archivo.filename,
           estadogf_id: 1,
+          datosgf_id: datosGFid,
         });
       } else if (tipo === "2") {
         documento = await Documentos.query().insert({
@@ -477,6 +520,7 @@ export const subirDocumento = async (req, res) => {
         documento = await documento.$query().patchAndFetch({
           archivo1: archivo.filename,
           estadogf_id: 1,
+          datosgf_id: datosGFid,
         });
       } else if (tipo === "2") {
         if (documento.archivo2) {
@@ -490,7 +534,10 @@ export const subirDocumento = async (req, res) => {
       }
     }
 
-    res.json({ mensaje: "Documento subido correctamente", documento });
+    res.json({
+      mensaje: "Documento subido correctamente",
+      documento,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
