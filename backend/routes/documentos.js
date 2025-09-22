@@ -11,7 +11,8 @@ import {
   obtenerFirma,
   firmarDocumento,
   firmarWord,
-  insertarMarcadorFirma
+  insertarMarcadorFirma,
+  exportarDatosGFRevisados
 } from "../controllers/documentosController.js";
 import { uploadFirma } from "../middlewares/upload.js";
 const router = express.Router();
@@ -37,11 +38,14 @@ router.post("/firma", uploadFirma.single("firma"), subirFirma);
 
 router.post("/aprobar", firmarDocumento);
 
+router.get("/export-excel", exportarDatosGFRevisados);
 router.get("/firma", obtenerFirma);
 router.get("/", obtenerDocumentos);
 
 router.get("/:id", obtenerDocumentoPorId);
 // router.patch("/:id/estado", actualizarEstado);
 router.delete("/:id", eliminarDocumento);
+
+
 
 export default router;

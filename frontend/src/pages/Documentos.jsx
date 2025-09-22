@@ -89,7 +89,31 @@ export default function Documentos() {
     };
     fetchFechas();
   }, []);
+  // 🆕 Función para descargar Excel
+  const handleDescargarExcel = async () => {
+    try {
+      console.log("📥 Iniciando descarga de Excel...");
 
+      const response = await api.get("/documentos/export-excel", {
+        responseType: "blob", // muy importante para manejar binarios
+      });
+
+      // Crear URL del blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "DatosGF.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      console.log("✅ Excel descargado correctamente");
+    } catch (error) {
+      console.error("❌ Error descargando Excel:", error);
+    }
+  };
+  // 🆕 Función para manejar la activación de fechas
   const handleActivar = async () => {
     try {
       setLoadingAccion(true);
@@ -129,6 +153,7 @@ export default function Documentos() {
   setModalSinDocumentoOpen(false);
 };
   
+
   // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
   const indicePrimero = indiceUltimo - usuariosPorPagina;
@@ -358,11 +383,7 @@ export default function Documentos() {
             Haz clic en el botón para descargar el archivo de Excel con el estado actual de la documentación.
           </p>
           <button
-            onClick={() => {
-              // Aquí se colocaría la lógica para iniciar la descarga del archivo.
-              // Podrías llamar a una función que haga una petición a tu API.
-              console.log('Iniciando la descarga del archivo Excel...');
-            }}
+            onClick={handleDescargarExcel}
             className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
           >
             Descargar Excel

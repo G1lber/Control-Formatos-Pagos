@@ -16,6 +16,7 @@ import Documento from "../models/Documentos.js";
 import { validarNumeroPlanilla } from "../utils/validacionesGF.js";
 import { validarNombreArchivo } from "../utils/validacionNombreArchivo.js";
 import { extraerDatosContrato } from "../utils/datosGF.js";
+import ExcelJS from "exceljs";
 
 
 
@@ -544,6 +545,61 @@ export const subirDocumento = async (req, res) => {
   }
 };
 
+
+
+export const exportarDatosGFRevisados = async (req, res) => {
+  try {
+    // 🔹 Buscar documentos con estado revisado
+    const documentos = await Documentos.query()
+      .where("estadogf_id", 2) // 2 = Revisado (puedes cambiar a dinámico si quieres)
+      .withGraphFetched("datosGF");
+
+    if (!documentos.length) {
+      return res.status(404).json({ error: "No hay documentos revisados." });
+    }
+
+    // Crear libro de Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Datos GF");
+
+    // Encabezados
+    worksheet.columns = [
+      { header: "Contrato SECOP", key: "contrato_SECOP", width: 20 },
+      { header: "Valor Obligación", key: "valor_obligacion", width: 20 },
+      { header: "Compromiso SIIF", key: "compromiso_SIIF", width: 20 },
+      { header: "Base ICA", key: "base_ica", width: 20 },
+      { header: "ICA", key: "ICA", width: 20 },
+      { header: "Base ReteFuente", key: "base_retefuente", width: 20 },
+      { header: "ReteFuente", key: "retefuente", width: 20 },
+      { header: "Embargo", key: "embargo", width: 20 },
+      { header: "Número Planilla", key: "numero_planilla", width: 20 },
+    ];
+
+    // Agregar filas
+    documentos.forEach((doc) => {
+      if (doc.datosGF) {
+        worksheet.addRow(doc.datosGF);
+      }
+    });
+
+    // Configurar cabeceras para descarga
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=datosGF_revisados.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    // Escribir y enviar archivo
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("❌ Error generando Excel:", error);
+    res.status(500).json({ error: "Error generando Excel" });
+  }
+};
 
 
 // 📄 Listar todos los documentos
