@@ -1,7 +1,8 @@
 import { Model } from "objection";
-import Documento from "./Documentos.js"
+import Documento from "./Documentos.js";
 import Login from "./Login.js";
-import Rol from "./Rol.js"; 
+import Rol from "./Rol.js";
+import TipoDocumento from "./TipoDocumento.js";
 
 class Usuario extends Model {
   static get tableName() {
@@ -32,6 +33,14 @@ class Usuario extends Model {
         join: {
           from: "usuarios.rol_id",
           to: "roles.id",
+        },
+      },
+      tipoDocumento: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: TipoDocumento,
+        join: {
+          from: "usuarios.tipo_documento_id",
+          to: "tipos_documento.id",
         },
       },
     };
