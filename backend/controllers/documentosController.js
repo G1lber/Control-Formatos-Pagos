@@ -564,15 +564,15 @@ export const exportarDatosGFRevisados = async (req, res) => {
 
     // Encabezados
     worksheet.columns = [
-      { header: "Contrato SECOP", key: "contrato_SECOP", width: 20 },
+      { header: "Número de contrato SECOP II", key: "contrato_SECOP", width: 20 },
       { header: "Valor Obligación", key: "valor_obligacion", width: 20 },
-      { header: "Compromiso SIIF", key: "compromiso_SIIF", width: 20 },
-      { header: "Base ICA", key: "base_ica", width: 20 },
-      { header: "ICA", key: "ICA", width: 20 },
-      { header: "Base ReteFuente", key: "base_retefuente", width: 20 },
-      { header: "ReteFuente", key: "retefuente", width: 20 },
-      { header: "Embargo", key: "embargo", width: 20 },
-      { header: "Número Planilla", key: "numero_planilla", width: 20 },
+      { header: "Numero de compromiso SIIF", key: "compromiso_SIIF", width: 20 },
+      { header: "$ Base Ica", key: "base_ica", width: 20 },
+      { header: "$ICA", key: "ICA", width: 20 },
+      { header: "$Base Retefuente", key: "base_retefuente", width: 20 },
+      { header: "$Retefuente", key: "retefuente", width: 20 },
+      { header: "$Embargo", key: "embargo", width: 20 },
+      { header: "No planilla seguridad social ", key: "numero_planilla", width: 20 },
     ];
 
     // Agregar filas
