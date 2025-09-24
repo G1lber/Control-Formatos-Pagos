@@ -191,7 +191,7 @@ export const firmarWord = async (req, res) => {
     res.json({
       message: "✅ Documento firmado correctamente",
       url: `/documentos-formatos/${file}`,
-    }); 
+    });
 
     // 📩 Enviar correo en segundo plano
     (async () => {
