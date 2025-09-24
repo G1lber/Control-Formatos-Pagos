@@ -188,6 +188,7 @@ export const firmarWord = async (req, res) => {
         const documento = await Documentos.query()
           .findById(documentoId)
           .withGraphFetched("usuarioRef");
+          
 
         if (documento && documento.usuarioRef?.correo) {
 
@@ -195,10 +196,9 @@ export const firmarWord = async (req, res) => {
             await sendMail(
               documento.usuarioRef.correo,
               "✅ Documento aprobado",
-              `Su documento ${file} ha sido aprobado y firmado correctamente.`,
-              [{ filename: file, path: filePath }]
+              `Su documento ha sido aprobado y firmado correctamente.`
             );
-            console.log("✅ Correo enviado con éxito");
+            // console.log("✅ Correo enviado con éxito");
           } catch (err) {
             console.error("❌ Error en sendMail:", err);
           }
@@ -280,7 +280,7 @@ export const firmarDocumento = async (req, res) => {
           await sendMail(
             documento.usuarioRef.correo,
             "✅ Documento aprobado",
-            `Su documento ${file} ha sido aprobado y firmado correctamente.`,
+            `Su documento ${filename} ha sido aprobado y firmado correctamente.`,
             [
               {
                 filename: file,
