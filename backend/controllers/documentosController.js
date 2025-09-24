@@ -236,7 +236,6 @@ export const firmarWord = async (req, res) => {
               documento.usuarioRef.correo,
               "✅ Documento aprobado - Control de Pagos SENA",
               emailHtml,
-              [{ filename: file, path: filePath }]
             );
             console.log("✅ Correo enviado con éxito");
           } catch (err) {
