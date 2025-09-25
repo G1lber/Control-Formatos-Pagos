@@ -1,5 +1,5 @@
-import { Model } from "objection";
-import Usuario from "./Usuario.js";
+const { Model } = require("objection");
+const Usuario = require("./Usuario.js");
 
 class Login extends Model {
   static get tableName() {
@@ -7,7 +7,6 @@ class Login extends Model {
   }
 
   static get relationMappings() {
-
     return {
       usuario_rel: {
         relation: Model.BelongsToOneRelation,
@@ -21,4 +20,4 @@ class Login extends Model {
   }
 }
 
-export default Login;
+module.exports = Login;

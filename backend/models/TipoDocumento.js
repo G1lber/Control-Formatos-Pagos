@@ -1,4 +1,5 @@
-import { Model } from "objection";
+const { Model } = require("objection");
+const Usuario = require("./Usuario.js");
 
 class TipoDocumento extends Model {
   static get tableName() {
@@ -13,7 +14,7 @@ class TipoDocumento extends Model {
     return {
       usuarios: {
         relation: Model.HasManyRelation,
-        modelClass: new URL("./Usuario.js", import.meta.url).pathname,
+        modelClass: Usuario,
         join: {
           from: "tipos_documento.id",
           to: "usuarios.tipo_documento_id",
@@ -23,4 +24,4 @@ class TipoDocumento extends Model {
   }
 }
 
-export default TipoDocumento;
+module.exports = TipoDocumento;

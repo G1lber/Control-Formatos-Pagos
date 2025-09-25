@@ -1,8 +1,8 @@
 // knexfile.js
-import dotenv from 'dotenv';
+const dotenv = require('dotenv');
 dotenv.config();
 
-export default {
+module.exports = {
   development: {
     client: "mysql2",
     connection: {

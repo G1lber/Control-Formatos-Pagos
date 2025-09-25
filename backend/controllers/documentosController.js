@@ -1,24 +1,22 @@
-import multer from "multer";
-import fs from "fs";
-import path from "path";
-import Usuario from "../models/Usuario.js";
-import Documentos from "../models/Documentos.js";
-import DatosGF from "../models/DatosGF.js";
-import { PDFDocument, rgb } from "pdf-lib";
-import { sendMail } from "../config/mailer.js"
-import PizZip from "pizzip";
-import Docxtemplater from "docxtemplater";
-import ImageModule from "docxtemplater-image-module-free";
-import * as cheerio from "cheerio";
-import sharp from "sharp";
-import { log } from "console";
-import Documento from "../models/Documentos.js";
-import { validarNumeroPlanilla } from "../utils/validacionesGF.js";
-import { validarNombreArchivo } from "../utils/validacionNombreArchivo.js";
-import { extraerDatosContrato } from "../utils/datosGF.js";
-import ExcelJS from "exceljs";
-
-
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const Usuario = require("../models/Usuario.js");
+const Documentos = require("../models/Documentos.js");
+const DatosGF = require("../models/DatosGF.js");
+const { PDFDocument, rgb } = require("pdf-lib");
+const { sendMail } = require("../config/mailer.js");
+const PizZip = require("pizzip");
+const Docxtemplater = require("docxtemplater");
+const ImageModule = require("docxtemplater-image-module-free");
+const cheerio = require("cheerio");
+const sharp = require("sharp");
+const { log } = require("console");
+const Documento = require("../models/Documentos.js");
+const { validarNumeroPlanilla } = require("../utils/validacionesGF.js");
+const { validarNombreArchivo } = require("../utils/validacionNombreArchivo.js");
+const { extraerDatosContrato } = require("../utils/datosGF.js");
+const ExcelJS = require("exceljs");
 
 const UPLOADS_DIR = path.resolve("documentos-formatos");
 const FIRMAS_DIR = path.resolve("firma");
@@ -51,7 +49,6 @@ const storageFirmas = multer.diskStorage({
   },
 });
 
-
 const fileFilter = async (req, file, cb) => {
   try {
     const { numero_doc, tipo } = req.body;
@@ -78,12 +75,13 @@ const fileFilter = async (req, file, cb) => {
   }
 };
 
-export const upload = multer({ storage, fileFilter });
+const upload = multer({ storage, fileFilter });
+module.exports.upload = upload;
 
 // --- Controladores ---
 
 // Insertar Marcador de donde ira la firma
-export const insertarMarcadorFirma = async (req, res) => {
+const insertarMarcadorFirma = async (req, res) => {
   try {
     const { file, posicion } = req.body;
     const filePath = path.resolve("documentos-formatos", file);
@@ -131,6 +129,7 @@ export const insertarMarcadorFirma = async (req, res) => {
     return res.status(500).json({ error: "Error insertando marcador" });
   }
 };
+module.exports.insertarMarcadorFirma = insertarMarcadorFirma;
 
 //Firmar Word
 function getImageModule() {
@@ -146,7 +145,7 @@ function getImageModule() {
   });
 }
 
-export const firmarWord = async (req, res) => {
+const firmarWord = async (req, res) => {
   let filePath;
   let firmaPath;
   try {
@@ -255,11 +254,10 @@ export const firmarWord = async (req, res) => {
     }
   }
 };
-
-
+module.exports.firmarWord = firmarWord;
 
 // Firmar el archivo PDF
-export const firmarDocumento = async (req, res) => {
+const firmarDocumento = async (req, res) => {
   let filePath;
   let firmaPath;
   try {
@@ -374,11 +372,10 @@ export const firmarDocumento = async (req, res) => {
     res.status(500).json({ error: "Error procesando la firma del documento" });
   }
 };
-
-
+module.exports.firmarDocumento = firmarDocumento;
 
 // Subir Firma
-export const subirFirma = async (req, res) => {
+const subirFirma = async (req, res) => {
   try {
     const archivo = req.file;
     if (!archivo) {
@@ -408,9 +405,9 @@ export const subirFirma = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+module.exports.subirFirma = subirFirma;
 
-
-export const obtenerFirma = (req, res) => {
+const obtenerFirma = (req, res) => {
   const firmaPath = path.resolve("firma", "firma.png");
 
   if (fs.existsSync(firmaPath)) {
@@ -419,10 +416,11 @@ export const obtenerFirma = (req, res) => {
     res.status(404).json({ error: "No hay firma registrada" });
   }
 };
+module.exports.obtenerFirma = obtenerFirma;
 
 // 📤 Subir documento
 
-export const subirDocumento = async (req, res) => {
+const subirDocumento = async (req, res) => {
   try {
     const { tipo } = req.body; // "1" o "2"
     const archivo = req.file;
@@ -543,15 +541,16 @@ export const subirDocumento = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+module.exports.subirDocumento = subirDocumento;
 
 const tiposDocMap = {
   1: "CC",
   2: "TI",
   3: "CE",
   4: "PAS",
-}
+};
 
-export const exportarDatosGFRevisados = async (req, res) => {
+const exportarDatosGFRevisados = async (req, res) => {
   try {
     // 🔹 Buscar documentos con estado revisado + relaciones usuario y datosGF
     const documentos = await Documento.query()
@@ -623,10 +622,10 @@ export const exportarDatosGFRevisados = async (req, res) => {
     res.status(500).json({ error: "Error generando Excel" });
   }
 };
-
+module.exports.exportarDatosGFRevisados = exportarDatosGFRevisados;
 
 // 📄 Listar todos los documentos
-export const obtenerDocumentos = async (req, res) => {
+const obtenerDocumentos = async (req, res) => {
   try {
     const documentos = await Documentos.query()
       .withGraphFetched("[usuarioRef, estadoGF, estadoGC]") // incluye usuario + estados GF y GC
@@ -638,9 +637,10 @@ export const obtenerDocumentos = async (req, res) => {
     res.status(500).json({ error: "Error al obtener documentos" });
   }
 };
+module.exports.obtenerDocumentos = obtenerDocumentos;
 
 // 🔎 Obtener un documento por Id
-export const obtenerDocumentoPorId = async (req, res) => {
+const obtenerDocumentoPorId = async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -675,9 +675,10 @@ export const obtenerDocumentoPorId = async (req, res) => {
     });
   }
 };
+module.exports.obtenerDocumentoPorId = obtenerDocumentoPorId;
 
 // ✏️ Actualizar estado GF
-export const actualizarEstadoGF = async (req, res) => {
+const actualizarEstadoGF = async (req, res) => {
   try {
     const { id } = req.params;
     const { estadogf_id } = req.body;
@@ -696,9 +697,10 @@ export const actualizarEstadoGF = async (req, res) => {
     res.status(500).json({ error: "Error al actualizar estado GF" });
   }
 };
+module.exports.actualizarEstadoGF = actualizarEstadoGF;
 
 // ✏️ Actualizar estado GC
-export const actualizarEstadoGC = async (req, res) => {
+const actualizarEstadoGC = async (req, res) => {
   try {
     const { id } = req.params;
     const { estadogc_id } = req.body;
@@ -717,9 +719,10 @@ export const actualizarEstadoGC = async (req, res) => {
     res.status(500).json({ error: "Error al actualizar estado GC" });
   }
 };
+module.exports.actualizarEstadoGC = actualizarEstadoGC;
 
 // ❌ Eliminar documento (y archivos asociados)
-export const eliminarDocumento = async (req, res) => {
+const eliminarDocumento = async (req, res) => {
   try {
     const { id } = req.params;
     const documento = await Documentos.query().findById(id);
@@ -746,3 +749,4 @@ export const eliminarDocumento = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar documento" });
   }
 };
+module.exports.eliminarDocumento = eliminarDocumento;

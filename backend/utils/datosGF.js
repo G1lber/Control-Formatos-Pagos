@@ -1,5 +1,5 @@
-import fs from "fs";
-import pdf from "pdf-parse";
+const fs = require("fs");
+const pdf = require("pdf-parse");
 
 /**
  * Lee el texto limpio de un PDF
@@ -25,7 +25,7 @@ async function leerPDF(rutaPDF) {
 /**
  * Extrae los datos clave del documento
  */
-export async function extraerDatosContrato(rutaPDF) {
+async function extraerDatosContrato(rutaPDF) {
   const texto = await leerPDF(rutaPDF);
 
   const numeroContrato   = (texto.match(/Nº del contrato:\s*(\d+)/i) || [])[1] || null;
@@ -53,3 +53,5 @@ export async function extraerDatosContrato(rutaPDF) {
     embargo,
   };
 }
+
+module.exports = { extraerDatosContrato };

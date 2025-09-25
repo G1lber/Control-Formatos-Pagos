@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
+const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -22,7 +22,7 @@ transporter.verify((error, success) => {
   }
 });
 
-export const sendMail = async (to, subject, text, attachments = []) =>{
+const sendMail = async (to, subject, text, attachments = []) => {
   try {
     const mailOptions = {
       from: `"Control de Pagos Sena" <${process.env.SMTP_USER}>`,
@@ -42,4 +42,4 @@ export const sendMail = async (to, subject, text, attachments = []) =>{
   }
 };
 
-export default transporter;
+module.exports = { sendMail, transporter };

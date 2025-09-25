@@ -1,6 +1,6 @@
 // backend/config/db.js
-import knex from "knex";
-import dotenv from "dotenv";
+const knex = require("knex");
+const dotenv = require("dotenv");
 dotenv.config();
 
 const knexInstance = knex({
@@ -14,4 +14,4 @@ const knexInstance = knex({
   pool: { min: 0, max: 10 }, // opcional
 });
 
-export default knexInstance;
+module.exports = knexInstance;

@@ -1,8 +1,8 @@
-import { Model } from "objection";
-import Documento from "./Documentos.js";
-import Login from "./Login.js";
-import Rol from "./Rol.js";
-import TipoDocumento from "./TipoDocumento.js";
+const { Model } = require("objection");
+const Documento = require("./Documentos.js");
+const Login = require("./Login.js");
+const Rol = require("./Rol.js");
+const TipoDocumento = require("./TipoDocumento.js");
 
 class Usuario extends Model {
   static get tableName() {
@@ -47,4 +47,4 @@ class Usuario extends Model {
   }
 }
 
-export default Usuario;
+module.exports = Usuario;

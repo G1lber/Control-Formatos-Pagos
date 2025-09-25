@@ -1,6 +1,6 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 // 📂 Carpeta documentos
 const DOCUMENTOS_DIR = path.resolve("formatos-pagos");
@@ -30,5 +30,7 @@ const storageFirmas = multer.diskStorage({
   },
 });
 
-export const uploadDocs = multer({ storage: storageDocs });
-export const uploadFirma = multer({ storage: storageFirmas });
+const uploadDocs = multer({ storage: storageDocs });
+const uploadFirma = multer({ storage: storageFirmas });
+
+module.exports = { uploadDocs, uploadFirma };

@@ -1,4 +1,4 @@
-import { Model } from "objection";
+const { Model } = require("objection");
 
 class FechaLimite extends Model {
   static get tableName() {
@@ -18,4 +18,4 @@ class FechaLimite extends Model {
   }
 }
 
-export default FechaLimite;
+module.exports = FechaLimite;

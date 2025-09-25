@@ -1,8 +1,7 @@
-import Login from "../models/Login.js";
-import bcrypt from "bcryptjs";
+const Login = require("../models/Login.js");
+const bcrypt = require("bcryptjs");
 
-
-export const login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { correo, password } = req.body;
 
@@ -52,3 +51,5 @@ export const login = async (req, res) => {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 };
+
+module.exports = { login };

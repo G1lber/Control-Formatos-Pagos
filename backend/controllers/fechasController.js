@@ -1,8 +1,7 @@
-// controllers/fechasController.js
-import FechaLimite from "../models/FechaLimite.js";
+const FechaLimite = require("../models/FechaLimite.js");
 
 // Obtener últimas fechas
-export const getFechas = async (req, res) => {
+const getFechas = async (req, res) => {
   try {
     const fechas = await FechaLimite.query().orderBy("id", "desc").limit(2);
 
@@ -24,7 +23,7 @@ export const getFechas = async (req, res) => {
 };
 
 // Guardar/Actualizar
-export const saveFechas = async (req, res) => {
+const saveFechas = async (req, res) => {
   try {
     const { fechaGF, fechaGC } = req.body;
 
@@ -58,3 +57,5 @@ export const saveFechas = async (req, res) => {
     res.status(500).json({ error: "Error al guardar fechas" });
   }
 };
+
+module.exports = { getFechas, saveFechas };

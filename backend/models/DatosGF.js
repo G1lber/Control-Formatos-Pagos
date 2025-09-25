@@ -1,4 +1,5 @@
-import { Model } from "objection";
+// ...existing code...
+const { Model } = require("objection");
 
 class DatosGF extends Model {
   static get tableName() {
@@ -6,4 +7,5 @@ class DatosGF extends Model {
   }
 }
 
-export default DatosGF;
+module.exports = DatosGF;
+// ...existing code...

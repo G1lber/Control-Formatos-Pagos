@@ -1,10 +1,10 @@
-import express from "express";
-import bcrypt from "bcryptjs";
-import Login from "../models/Login.js";
-import Usuario from "../models/Usuario.js";
-import ResetCode from "../models/ResetCode.js"; // si usas tabla
-import nodemailer from "nodemailer";
-import transporter from "../config/mailer.js";
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const Login = require("../models/Login.js");
+const Usuario = require("../models/Usuario.js");
+const ResetCode = require("../models/ResetCode.js"); // si usas tabla
+const nodemailer = require("nodemailer");
+const { transporter } = require("../config/mailer.js");
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.post("/forgot-password", async (req, res) => {
     
     if (!usuario) return res.status(404).json({ error: "Correo no registrado" });
     if (usuario.rol && usuario.rol.nombre_rol !== "admin") {
-    return res.status(403).json({ error: "Solo los admin pueden recuperar contraseña" });
+      return res.status(403).json({ error: "Solo los admin pueden recuperar contraseña" });
     }
 
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
@@ -133,4 +133,4 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

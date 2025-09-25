@@ -1,9 +1,8 @@
-import Usuario from "../models/Usuario.js";
-import Documentos from "../models/Documentos.js";
-import Rol from "../models/Rol.js";
-import Login from "../models/Login.js";
-import bcrypt from "bcryptjs";
-
+const Usuario = require("../models/Usuario.js");
+const Documentos = require("../models/Documentos.js");
+const Rol = require("../models/Rol.js");
+const Login = require("../models/Login.js");
+const bcrypt = require("bcryptjs");
 
 // Obtener todos los usuarios
 const getUsuarios = async (req, res) => {
@@ -35,7 +34,6 @@ const createUsuario = async (req, res) => {
   const { nombre, numero_doc, correo, rol_id, password } = req.body;
 
   try {
-    // Crear usuario
     const usuario = await Usuario.query().insert({
       nombre,
       numero_doc,
@@ -43,7 +41,6 @@ const createUsuario = async (req, res) => {
       rol_id,
     });
 
-    // Si el rol es admin → requiere contraseña
     const rol = await Rol.query().findById(rol_id);
     if (rol && rol.nombre_rol === "admin") {
       if (!password) {
@@ -57,13 +54,12 @@ const createUsuario = async (req, res) => {
       });
     }
 
-    // 🔹 Crear documento vacío ligado al usuario
     await Documentos.query().insert({
       usuario: usuario.id,
       archivo1: null,
       archivo2: null,
-      estadogf_id: 3, // estado inicial GF
-      estadogc_id: 3, // estado inicial GC
+      estadogf_id: 3,
+      estadogc_id: 3,
     });
 
     res.status(201).json(usuario);
@@ -72,6 +68,7 @@ const createUsuario = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 // Actualizar usuario
 const updateUsuario = async (req, res) => {
   const { nombre, numero_doc, correo, rol_id, password } = req.body;
@@ -83,15 +80,12 @@ const updateUsuario = async (req, res) => {
     const rolAnterior = await Rol.query().findById(usuario.rol_id);
     const rolNuevo = await Rol.query().findById(rol_id);
 
-    // Actualizar datos básicos (nombre, doc, correo, rol)
     const usuarioActualizado = await Usuario.query().patchAndFetchById(req.params.id, {
       nombre,
       numero_doc,
       correo,
       rol_id,
     });
-
-    // --- Manejo de credenciales según cambios de rol ---
 
     // Si pasa de usuario → admin
     if (rolAnterior.nombre_rol !== "admin" && rolNuevo.nombre_rol === "admin") {
@@ -133,7 +127,6 @@ const updateUsuario = async (req, res) => {
   }
 };
 
-
 // Eliminar usuario
 const deleteUsuario = async (req, res) => {
   try {
@@ -142,13 +135,8 @@ const deleteUsuario = async (req, res) => {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    // Si tiene login → eliminarlo
     await Login.query().delete().where("usuario", usuario.id);
-
-    // Eliminar documentos asociados
     await Documentos.query().delete().where("usuario", usuario.id);
-
-    // Finalmente eliminar el usuario
     await Usuario.query().deleteById(usuario.id);
 
     res.json({ message: "Usuario y documentos eliminados correctamente" });
@@ -158,7 +146,7 @@ const deleteUsuario = async (req, res) => {
   }
 };
 
-export {
+module.exports = {
   getUsuarios,
   getUsuario,
   createUsuario,

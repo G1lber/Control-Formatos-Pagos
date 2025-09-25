@@ -1,5 +1,5 @@
-import { Model } from "objection";
-import Documento from "./Documentos.js";
+const { Model } = require("objection");
+const Documento = require("./Documentos.js");
 
 class Estado extends Model {
   static get tableName() {
@@ -7,7 +7,6 @@ class Estado extends Model {
   }
 
   static get relationMappings() {
-
     return {
       documentos: {
         relation: Model.HasManyRelation,
@@ -21,4 +20,4 @@ class Estado extends Model {
   }
 }
 
-export default Estado;
+module.exports = Estado;

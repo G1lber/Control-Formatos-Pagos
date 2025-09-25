@@ -1,7 +1,7 @@
-import fs from "fs";
-import pdf from "pdf-parse";
+const fs = require("fs");
+const pdf = require("pdf-parse");
 
-export async function validarNumeroPlanilla(rutaPDF) {
+async function validarNumeroPlanilla(rutaPDF) {
   const dataBuffer = fs.readFileSync(rutaPDF);
   const data = await pdf(dataBuffer);
   const texto = (data.text || "").replace(/\r/g, "");
@@ -29,3 +29,5 @@ export async function validarNumeroPlanilla(rutaPDF) {
 
   return numeroPlanilla;
 }
+
+module.exports = { validarNumeroPlanilla };

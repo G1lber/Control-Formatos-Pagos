@@ -1,15 +1,11 @@
-import express from "express";
-import { sendMail } from "../config/mailer.js";
-import db from "../config/db.js"; 
-import { fileURLToPath } from 'url';
-import path from 'path';
-import dotenv from 'dotenv';
+const express = require("express");
+const { sendMail } = require("../config/mailer.js");
+const db = require("../config/db.js");
+const path = require("path");
+const dotenv = require("dotenv");
 dotenv.config();
 
 const router = express.Router();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Base URL pública para las imágenes
 const BASE_URL = process.env.BASE_URL || "http://localhost:4000";
@@ -111,5 +107,4 @@ router.post("/", async (req, res) => {
   }
 });
 
-
-export default router;
+module.exports = router;

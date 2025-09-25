@@ -1,6 +1,5 @@
-// backend/routes/documentosRoutes.js
-import express from "express";
-import {
+const express = require("express");
+const {
   subirDocumento,
   upload,
   obtenerDocumentos,
@@ -13,8 +12,8 @@ import {
   firmarWord,
   insertarMarcadorFirma,
   exportarDatosGFRevisados
-} from "../controllers/documentosController.js";
-import { uploadFirma } from "../middlewares/upload.js";
+} = require("../controllers/documentosController.js");
+const { uploadFirma } = require("../middlewares/upload.js");
 const router = express.Router();
 
 // 📤 Subir documento
@@ -46,6 +45,4 @@ router.get("/:id", obtenerDocumentoPorId);
 // router.patch("/:id/estado", actualizarEstado);
 router.delete("/:id", eliminarDocumento);
 
-
-
-export default router;
+module.exports = router;

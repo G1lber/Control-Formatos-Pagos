@@ -1,7 +1,7 @@
-import { Model } from "objection";
-import Usuario from "./Usuario.js";
-import Estado from "./Estado.js";
-import DatosGF from "./DatosGF.js";
+const { Model } = require("objection");
+const Usuario = require("./Usuario.js");
+const Estado = require("./Estado.js");
+const DatosGF = require("./DatosGF.js");
 
 class Documento extends Model {
   static get tableName() {
@@ -46,4 +46,4 @@ class Documento extends Model {
   }
 }
 
-export default Documento;
+module.exports = Documento;

@@ -1,5 +1,5 @@
-import cron from "node-cron";
-import ResetCode from "../models/ResetCode.js";
+const cron = require("node-cron");
+const ResetCode = require("../models/ResetCode.js");
 
 // Ejecutar cada minuto (puedes ajustarlo a cada 5m, cada hora, etc.)
 cron.schedule("* * * * *", async () => {

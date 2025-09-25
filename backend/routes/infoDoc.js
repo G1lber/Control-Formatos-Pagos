@@ -1,5 +1,5 @@
-import express from "express";
-import db from "../db.js"; // o tu conexión a BD
+const express = require("express");
+const db = require("../db.js"); // o tu conexión a BD
 
 const router = express.Router();
 
@@ -24,4 +24,4 @@ router.get("/documento/:id", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

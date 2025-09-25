@@ -1,5 +1,5 @@
-import { Model } from "objection";
-import Usuario from "./Usuario.js";
+const { Model } = require("objection");
+const Usuario = require("./Usuario.js");
 
 class Rol extends Model {
   static get tableName() {
@@ -20,4 +20,5 @@ class Rol extends Model {
   }
 }
 
-export default Rol;
+module.exports = Rol;
+
