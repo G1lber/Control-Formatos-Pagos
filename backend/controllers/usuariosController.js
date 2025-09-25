@@ -31,7 +31,7 @@ const getUsuario = async (req, res) => {
 
 // Crear usuario
 const createUsuario = async (req, res) => {
-  const { nombre, numero_doc, correo, rol_id, password } = req.body;
+  const { nombre, numero_doc, correo, rol_id, tipo_documento_id, password } = req.body;
 
   try {
     // Crear usuario
@@ -39,7 +39,8 @@ const createUsuario = async (req, res) => {
       nombre,
       numero_doc,
       correo,
-      rol_id,
+      rol_id, 
+      tipo_documento_id, // Asegurar que el campo se mapea correctamente
     });
 
     // Si el rol es admin → requiere contraseña
@@ -73,7 +74,7 @@ const createUsuario = async (req, res) => {
 };
 // Actualizar usuario
 const updateUsuario = async (req, res) => {
-  const { nombre, numero_doc, correo, rol_id, password } = req.body;
+  const { nombre, numero_doc, correo, rol_id,tipo_documento_id, password } = req.body;
 
   try {
     const usuario = await Usuario.query().findById(req.params.id);
@@ -88,6 +89,7 @@ const updateUsuario = async (req, res) => {
       numero_doc,
       correo,
       rol_id,
+      tipo_documento_id, // Asegurar que el campo se mapea correctamente
     });
 
     // --- Manejo de credenciales según cambios de rol ---

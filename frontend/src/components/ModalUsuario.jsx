@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
+export default function UsuarioModal({ isOpen, onClose, onSave, usuario, tiposDoc }) {
   const [formData, setFormData] = useState({
     nombre: "",
     numero_doc: "",
     correo: "",
     rol_id: "2",
+    tipo_documento_id:"",
     password: "",
   });
 
@@ -20,6 +21,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
           numero_doc: usuario.numero_doc || "",
           correo: usuario.correo || "",
           rol_id: usuario.rol_id?.toString() || "2",
+          tipo_documento_id: usuario.tipo_documento_id?.toString() || "",
           password: "", // limpiar siempre
         });
       } else {
@@ -28,6 +30,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
           numero_doc: "",
           correo: "",
           rol_id: "2",
+          tipo_documento_id: "",
           password: "",
         });
       }
@@ -54,6 +57,7 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
       nombre: formData.nombre,
       numero_doc: formData.numero_doc,
       correo: formData.correo,
+      tipo_documento_id: formData.tipo_documento_id,
       rol_id: formData.rol_id,
     };
 
@@ -115,6 +119,26 @@ export default function UsuarioModal({ isOpen, onClose, onSave, usuario }) {
               required
             />
           </div>
+          
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">
+                Tipo de Documento
+              </label>
+              <select
+                name="tipo_documento_id"
+                value={formData.tipo_documento_id}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-[var(--borde-input)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-principal)] shadow-sm"
+                required
+              >
+                <option value="">Seleccione un tipo</option>
+                {tiposDoc.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-texto)] mb-1">

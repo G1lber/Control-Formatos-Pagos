@@ -25,6 +25,21 @@ export default function Usuarios() {
   const [formData, setFormData] = useState(null);
   const [error, setError] = useState("");
 
+  const [tiposDoc, setTiposDoc] = useState([]);
+
+  useEffect(() => {
+    const fetchTiposDoc = async () => {
+      try {
+        const res = await fetch(`${API_URL}/tipos_documento`);
+        const data = await res.json();
+        setTiposDoc(data);
+      } catch (err) {
+        console.error("Error cargando tipos de documento", err);
+      }
+    };
+    fetchTiposDoc();
+  }, []);
+
   const fetchUsuarios = async () => {
     try {
       const res = await fetch(`${API_URL}/usuarios`);
@@ -370,6 +385,7 @@ export default function Usuarios() {
           setConfirmOpen(true);
         }}
         usuario={usuarioEdit}
+        tiposDoc={tiposDoc}
       />
 
       {/* Modal Confirmación */}

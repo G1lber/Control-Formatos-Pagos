@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 import rechazoRoutes from "./routes/rechazo.js";
 import fechasRoutes from "./routes/fechas.js";
 import recordatorioRoutes from "./routes/recordatorio.js";
+import tiposDocumentoRoutes from "./routes/tipoDocumento.js";
 
 dotenv.config();
 const app = express();
@@ -51,6 +52,8 @@ app.use("/api/login", loginRoutes);
 app.use("/api/documentos", documentosRoutes);
 app.use("/api/rechazo", rechazoRoutes);
 app.use("/api/recordatorio", recordatorioRoutes); 
+
+app.use("/api/tipos_documento", tiposDocumentoRoutes);
 
 // nueva ruta para olvidé contraseña
 app.use("/auth", authRoutes);
