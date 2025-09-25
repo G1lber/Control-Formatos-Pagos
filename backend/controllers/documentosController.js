@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
+import DatosGF from "../models/DatosGF.js";
 import { PDFDocument, rgb } from "pdf-lib";
 import { sendMail } from "../config/mailer.js"
 import PizZip from "pizzip";
@@ -11,6 +12,11 @@ import ImageModule from "docxtemplater-image-module-free";
 import * as cheerio from "cheerio";
 import sharp from "sharp";
 import { log } from "console";
+import Documento from "../models/Documentos.js";
+import { validarNumeroPlanilla } from "../utils/validacionesGF.js";
+import { validarNombreArchivo } from "../utils/validacionNombreArchivo.js";
+import { extraerDatosContrato } from "../utils/datosGF.js";
+import ExcelJS from "exceljs";
 
 
 
@@ -176,27 +182,61 @@ export const firmarWord = async (req, res) => {
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
     fs.writeFileSync(filePath, buffer);
 
+    // ✅ Actualizar estadoGF a 2
+    await Documentos.query().findById(documentoId).patch({
+      estadogc_id: 2,
+    });
+
     // ✅ Responder rápido al cliente
     res.json({
       message: "✅ Documento firmado correctamente",
       url: `/documentos-formatos/${file}`,
-    }); 
+    });
 
     // 📩 Enviar correo en segundo plano
     (async () => {
-      try {
+     try {
         const documento = await Documentos.query()
           .findById(documentoId)
           .withGraphFetched("usuarioRef");
           
 
         if (documento && documento.usuarioRef?.correo) {
+          const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <!-- HEADER -->
+            <div style="background-color: #ffffff; padding: 16px; text-align: center;">
+              <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" style="width: 100px; margin-bottom: 8px;" />
+              <h2 style="color: #39A900; margin: 0;">Control de Pagos SENA</h2>
+            </div>
+
+            <!-- CUERPO -->
+            <div style="padding: 20px; color: #333;">
+              <p>Hola <b>${documento.usuarioRef.nombre || "Usuario"}</b>,</p>
+
+              <p>
+                El documento GC <strong>"${file}"</strong> ha sido 
+                <span style="color:#2E8C00; font-weight:600;">aprobado y firmado correctamente.</span> ✅ 
+              </p>
+
+              <p>Puedes conservar el documento firmado que se adjunta a este correo.</p>
+
+              <p style="margin-top: 20px;">Atentamente,<br><strong>Equipo Control de Pagos SENA</strong></p>
+            </div>
+
+            <!-- FOOTER -->
+            <div style="background-color: #f5f5f5; padding: 12px; text-align: center; font-size: 12px; color: #777;">
+              © ${new Date().getFullYear()} SENA - Control de Pagos<br>
+              Este es un mensaje automático. Si tienes dudas, responde a este correo o contacta al equipo de Control de Pagos.
+            </div>
+          </div>
+          `;
 
           try {
             await sendMail(
               documento.usuarioRef.correo,
-              "✅ Documento aprobado",
-              `Su documento ha sido aprobado y firmado correctamente.`
+              "✅ Documento aprobado - Control de Pagos SENA",
+              emailHtml,
             );
             // console.log("✅ Correo enviado con éxito");
           } catch (err) {
@@ -216,6 +256,7 @@ export const firmarWord = async (req, res) => {
     }
   }
 };
+
 
 
 // Firmar el archivo PDF
@@ -250,6 +291,7 @@ export const firmarDocumento = async (req, res) => {
     } else {
       throw new Error("La firma debe ser PNG o JPG");
     }
+
     // Insertar firma en la primera página
     const firstPage = pdfDoc.getPages()[0];
     firstPage.drawImage(firmaImage, {
@@ -262,6 +304,11 @@ export const firmarDocumento = async (req, res) => {
     // Guardar el PDF firmado
     const signedPdfBytes = await pdfDoc.save();
     fs.writeFileSync(filePath, signedPdfBytes);
+
+    // ✅ Actualizar estadoGF a 2
+    await Documentos.query().findById(documentoId).patch({
+      estadogf_id: 2,
+    });
 
     // Responder rápido al frontend
     res.json({
@@ -277,10 +324,40 @@ export const firmarDocumento = async (req, res) => {
           .withGraphFetched("usuarioRef");
 
         if (documento && documento.usuarioRef?.correo) {
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <!-- HEADER -->
+              <div style="background-color: #ffffff; padding: 16px; text-align: center;">
+                <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" style="width: 100px; margin-bottom: 8px;" />
+                <h2 style="color: #39A900; margin: 0;">Control de Pagos SENA</h2>
+              </div>
+
+              <!-- CUERPO -->
+              <div style="padding: 20px; color: #333;">
+                <p>Hola <b>${documento.usuarioRef.nombre || "Usuario"}</b>,</p>
+
+                <p>
+                  Nos complace informarte que tu documento GC <strong>"${file}"</strong> ha sido 
+                  <span style="color:#2E8C00; font-weight:600;">Aprobado y firmado correctamente</span>.
+                </p>
+
+                <p>📎 El documento aprobado se adjunta a este correo para tu referencia.</p>
+
+                <p style="margin-top: 20px;">Atentamente,<br><strong>Equipo Control de Pagos SENA</strong></p>
+              </div>
+
+              <!-- FOOTER -->
+              <div style="background-color: #f5f5f5; padding: 12px; text-align: center; font-size: 12px; color: #777;">
+                © ${new Date().getFullYear()} SENA - Control de Pagos<br>
+                Este es un mensaje automático. Si tienes dudas, responde a este correo o contacta al equipo de Control de Pagos.
+              </div>
+            </div>
+          `;
+
           await sendMail(
             documento.usuarioRef.correo,
-            "✅ Documento aprobado",
-            `Su documento ${filename} ha sido aprobado y firmado correctamente.`,
+            "✅ Documento aprobado - Control de Pagos SENA",
+            emailHtml,
             [
               {
                 filename: file,
@@ -298,6 +375,7 @@ export const firmarDocumento = async (req, res) => {
     res.status(500).json({ error: "Error procesando la firma del documento" });
   }
 };
+
 
 
 // Subir Firma
@@ -344,6 +422,7 @@ export const obtenerFirma = (req, res) => {
 };
 
 // 📤 Subir documento
+
 export const subirDocumento = async (req, res) => {
   try {
     const { tipo } = req.body; // "1" o "2"
@@ -354,25 +433,86 @@ export const subirDocumento = async (req, res) => {
       return res.status(400).json({ error: "No se envió ningún archivo" });
     }
 
+    const rutaPDF = path.join(UPLOADS_DIR, archivo.filename);
+
+    // ⚡ Validar siempre el nombre del archivo
+    try {
+      validarNombreArchivo(archivo.filename, usuario.numero_doc);
+    } catch (errValidNombre) {
+      if (fs.existsSync(rutaPDF)) fs.unlinkSync(rutaPDF);
+      return res.status(400).json({ error: errValidNombre.message });
+    }
+
+    let datosGFid = null;
+    let numeroPlanilla = null;
+
+    // ⚡ Validar número de planilla y extraer datos si es tipo 1 (GF)
+    if (tipo === "1") {
+      try {
+        numeroPlanilla = await validarNumeroPlanilla(rutaPDF);
+        console.log(`✅ Número de planilla validado: ${numeroPlanilla}`);
+
+        // Extraer datos del PDF
+        const datosExtraidos = await extraerDatosContrato(rutaPDF);
+
+        // Buscar si el usuario ya tiene documento con datosGF asociado
+        let documentoExistente = await Documentos.query().findOne({ usuario: usuario.id });
+
+        if (documentoExistente && documentoExistente.datosgf_id) {
+          // 🔹 Actualizar el registro existente en datosGF
+          const updatedGF = await DatosGF.query()
+            .patchAndFetchById(documentoExistente.datosgf_id, {
+              contrato_SECOP: datosExtraidos.numeroContrato,
+              valor_obligacion: datosExtraidos.valorBruto,
+              compromiso_SIIF: datosExtraidos.compromisoSIIF,
+              base_ica: datosExtraidos.baseICA,
+              ICA: datosExtraidos.ICA,
+              base_retefuente: datosExtraidos.baseRenta,
+              retefuente: datosExtraidos.menosReteFuente,
+              embargo: datosExtraidos.embargo,
+              numero_planilla: numeroPlanilla,
+            });
+          datosGFid = updatedGF.id;
+        } else {
+          // 🔹 Crear solo si no existe antes
+          const newGF = await DatosGF.query().insert({
+            contrato_SECOP: datosExtraidos.numeroContrato,
+            valor_obligacion: datosExtraidos.valorBruto,
+            compromiso_SIIF: datosExtraidos.compromisoSIIF,
+            base_ica: datosExtraidos.baseICA,
+            ICA: datosExtraidos.ICA,
+            base_retefuente: datosExtraidos.baseRenta,
+            retefuente: datosExtraidos.menosReteFuente,
+            embargo: datosExtraidos.embargo,
+            numero_planilla: numeroPlanilla,
+          });
+          datosGFid = newGF.id;
+        }
+      } catch (errValid) {
+        if (fs.existsSync(rutaPDF)) fs.unlinkSync(rutaPDF);
+        return res.status(400).json({ error: errValid.message });
+      }
+    }
+
+    // 🔹 Buscar si ya existe documento para ese usuario
     let documento = await Documentos.query().findOne({ usuario: usuario.id });
 
     if (!documento) {
-      // 🔹 Insertar nuevo documento dependiendo del tipo
       if (tipo === "1") {
         documento = await Documentos.query().insert({
           usuario: usuario.id,
           archivo1: archivo.filename,
-          estadogf_id: 1, // solo GF
+          estadogf_id: 1,
+          datosgf_id: datosGFid,
         });
       } else if (tipo === "2") {
         documento = await Documentos.query().insert({
           usuario: usuario.id,
           archivo2: archivo.filename,
-          estadogc_id: 1, // solo GC
+          estadogc_id: 1,
         });
       }
     } else {
-      // 🔹 Actualizar documento existente
       if (tipo === "1") {
         if (documento.archivo1) {
           const oldPath = path.join(UPLOADS_DIR, documento.archivo1);
@@ -380,7 +520,8 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo1: archivo.filename,
-          estadogf_id: 1, // ✅ solo cambia GF
+          estadogf_id: 1,
+          datosgf_id: datosGFid,
         });
       } else if (tipo === "2") {
         if (documento.archivo2) {
@@ -389,15 +530,98 @@ export const subirDocumento = async (req, res) => {
         }
         documento = await documento.$query().patchAndFetch({
           archivo2: archivo.filename,
-          estadogc_id: 1, // ✅ solo cambia GC
+          estadogc_id: 1,
         });
       }
     }
 
-    res.json({ mensaje: "Documento subido correctamente", documento });
+    res.json({
+      mensaje: "Documento subido correctamente",
+      documento,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+const tiposDocMap = {
+  1: "CC",
+  2: "TI",
+  3: "CE",
+  4: "PAS",
+}
+
+export const exportarDatosGFRevisados = async (req, res) => {
+  try {
+    // 🔹 Buscar documentos con estado revisado + relaciones usuario y datosGF
+    const documentos = await Documento.query()
+      .where("estadogf_id", 2) // 2 = Revisado
+      .withGraphFetched("[datosGF, usuarioRef.tipoDocumento]"); 
+
+    if (!documentos.length) {
+      return res.status(404).json({ error: "No hay documentos revisados." });
+    }
+
+    // Crear libro de Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Datos GF");
+
+    // Encabezados
+    worksheet.columns = [
+      { header: "Número de contrato SECOP II", key: "contrato_SECOP", width: 25 },
+      { header: "Nombre Razón social", key: "nombre_usuario", width: 30 },
+      { header: "Tipo identificación", key: "tipo_doc_usuario", width: 20 },
+      { header: "No de identificación", key: "num_doc_usuario", width: 25 },
+
+      { header: "Valor Obligación", key: "valor_obligacion", width: 20 },
+      { header: "Numero de compromiso SIIF", key: "compromiso_SIIF", width: 25 },
+      { header: "$ Base Ica", key: "base_ica", width: 20 },
+      { header: "$ICA", key: "ICA", width: 20 },
+      { header: "$Base Retefuente", key: "base_retefuente", width: 25 },
+      { header: "$Retefuente", key: "retefuente", width: 20 },
+      { header: "$Embargo", key: "embargo", width: 20 },
+      { header: "No planilla seguridad social", key: "numero_planilla", width: 25 },
+    ];
+
+    // Agregar filas
+    documentos.forEach((doc) => {
+      worksheet.addRow({
+        // 🔹 Datos del usuario
+        nombre_usuario: doc.usuarioRef ? doc.usuarioRef.nombre : "-",
+        tipo_doc_usuario: doc.usuarioRef ? tiposDocMap[doc.usuarioRef.tipo_doc] ?? "-" : "-",
+        num_doc_usuario: doc.usuarioRef ? doc.usuarioRef.numero_doc : "-", // asegúrate del nombre del campo en tu tabla usuarios
+
+        // 🔹 Datos de datosGF
+        contrato_SECOP: doc.datosGF?.contrato_SECOP,
+        valor_obligacion: doc.datosGF?.valor_obligacion,
+        compromiso_SIIF: doc.datosGF?.compromiso_SIIF,
+        base_ica: doc.datosGF?.base_ica,
+        ICA: doc.datosGF?.ICA,
+        base_retefuente: doc.datosGF?.base_retefuente,
+        retefuente: doc.datosGF?.retefuente,
+        embargo: doc.datosGF?.embargo,
+        numero_planilla: doc.datosGF?.numero_planilla,
+      });
+    });
+    
+
+    // Configurar cabeceras para descarga
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=datosGF_revisados.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    // Escribir y enviar archivo
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("❌ Error generando Excel:", error);
+    res.status(500).json({ error: "Error generando Excel" });
   }
 };
 
@@ -416,23 +640,40 @@ export const obtenerDocumentos = async (req, res) => {
   }
 };
 
-// 🔎 Obtener un documento por ID
+// 🔎 Obtener un documento por Id
 export const obtenerDocumentoPorId = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const documento = await Documentos.query()
+    
+    // Consulta manual con join - solo seleccionamos el nombre
+    const documento = await Documento.query()
       .findById(id)
-      .withGraphFetched("[usuarioRef, estadoGF, estadoGC]");
+      .select('documentos.*', 'usuarios.nombre') // Solo nombre, sin numero_doc
+      .join('usuarios', 'documentos.usuario', 'usuarios.id')
+      .first();
 
     if (!documento) {
-      return res.status(404).json({ error: "Documento no encontrado" });
+      return res.status(404).json({ error: 'Documento no encontrado' });
     }
 
-    res.json(documento);
+    // Formatear la respuesta
+    const documentoConUsuario = {
+      ...documento,
+      usuarioRef: {
+        nombre: documento.nombre // Solo pasamos el nombre
+      }
+    };
+
+    // Eliminar campo temporal
+    delete documentoConUsuario.nombre;
+
+    res.json(documentoConUsuario);
   } catch (error) {
-    console.error("Error al obtener documento:", error);
-    res.status(500).json({ error: "Error al obtener documento" });
+    console.error('Error al obtener documento:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      details: error.message
+    });
   }
 };
 

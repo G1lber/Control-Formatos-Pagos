@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import * as Accordion from "@radix-ui/react-accordion";
 import CardDesplegable from "../components/CardDesplegable";
+import ConfirmacionModal from "../components/ConfirmacionModal";
 import api from "../services/api";
 import { toColombiaDate } from "../utils/fecha";
 import {
   toColombiaInputString,
   inputColombiaToUTC,
+  formatFechaColombia,
 } from "../utils/fecha";
+import ModalSinDocumento from "../components/ModalSinDocumento";
 
 export default function Documentos() {
   const [filtro, setFiltro] = useState("Pendiente");
@@ -19,12 +22,26 @@ export default function Documentos() {
   const [menuAbierto, setMenuAbierto] = useState(null);
   const [dropdownPos, setDropdownPos] = useState("down");
   const [query, setQuery] = useState("");
+  const [modalFechasOpen, setModalFechasOpen] = useState(false);
+  const [modalFirmaOpen, setModalFirmaOpen] = useState(false);
+  const [errorFechas, setErrorFechas] = useState("");
+  const [errorFirma, setErrorFirma] = useState("");
+  const [loadingAccion, setLoadingAccion] = useState(false);
+  const [modalSinDocumentoOpen, setModalSinDocumentoOpen] = useState(false);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [tipoDocumento, setTipoDocumento] = useState("");
+
+  const [fechaGFOriginal, setFechaGFOriginal] = useState("");
+  const [fechaGCOriginal, setFechaGCOriginal] = useState("");
 
   // 📄 paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 12;
   const dropdownRefs = useRef({});
   const [tipoArchivo, setTipoArchivo] = useState("");
+
+  // Estado para guardar correos enviados 
+  const [correosEnviados, setCorreosEnviados] = useState({});
 
   // 📌 Firma
   const [firma, setFirma] = useState(null); // URL firma guardada
@@ -57,8 +74,14 @@ export default function Documentos() {
       try {
         const { data } = await api.get("/fechas");
         if (data) {
-          setFechaGF(data.fechaGF ? toColombiaInputString(data.fechaGF) : "");
-          setFechaGC(data.fechaGC ? toColombiaInputString(data.fechaGC) : "");
+          const gf = data.fechaGF ? toColombiaInputString(data.fechaGF) : "";
+          const gc = data.fechaGC ? toColombiaInputString(data.fechaGC) : ""
+          // 💾 Guarda las fechas iniciales
+          setFechaGF(gf);
+          setFechaGC(gc);
+
+          setFechaGFOriginal(gf);
+          setFechaGCOriginal(gc);
         }
       } catch (err) {
         console.error("❌ Error al cargar fechas:", err);
@@ -66,19 +89,70 @@ export default function Documentos() {
     };
     fetchFechas();
   }, []);
+  // 🆕 Función para descargar Excel
+  const handleDescargarExcel = async () => {
+    try {
+      console.log("📥 Iniciando descarga de Excel...");
 
+      const response = await api.get("/documentos/export-excel", {
+        responseType: "blob", // muy importante para manejar binarios
+      });
+
+      // Crear URL del blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "DatosGF.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      console.log("✅ Excel descargado correctamente");
+    } catch (error) {
+      console.error("❌ Error descargando Excel:", error);
+    }
+  };
+  // 🆕 Función para manejar la activación de fechas
   const handleActivar = async () => {
     try {
+      setLoadingAccion(true);
+      setErrorFechas("");
       await api.post("/fechas", {
         fechaGF: fechaGF ? inputColombiaToUTC(fechaGF) : null,
         fechaGC: fechaGC ? inputColombiaToUTC(fechaGC) : null,
       });
-      alert("Fechas guardadas ✅");
+      setModalFechasOpen(false);
+      setFechaGFOriginal(fechaGF);
+      setFechaGCOriginal(fechaGC);
     } catch (error) {
       console.error("Error guardando fechas:", error);
-      alert("❌ Error al guardar fechas");
+      setErrorFechas("No se pudieron guardar las fechas. Intenta nuevamente.");
+    } finally {
+      setLoadingAccion(false);
     }
   };
+  
+  // 🆕 Función para manejar el cierre del modal
+  const handleCloseModal = () => {
+    // 🚫 Evita cerrar si hay una acción en curso
+    if (loadingAccion) return;
+
+    // ⏪ Restaura las fechas a sus valores originales
+    setFechaGF(fechaGFOriginal);
+    setFechaGC(fechaGCOriginal);
+    setModalFechasOpen(false);
+  };
+  const handleCerrarModal = (usuario, tipoDocumento) => {
+  if (usuario && usuario.id) {
+    setCorreosEnviados((prev) => ({
+      ...prev,
+      [`${usuario.id}-${tipoDocumento}`]: true
+    }));
+  }
+  setModalSinDocumentoOpen(false);
+};
+  
 
   // 📄 Paginación
   const indiceUltimo = paginaActual * usuariosPorPagina;
@@ -105,8 +179,7 @@ export default function Documentos() {
     cargarDatos();
   }, []);
 
-  // 📌 Cargar firma del backend
-  useEffect(() => {
+  // 📌 Cargar firma del backend (extract)
   const fetchFirma = async () => {
     try {
       const res = await api.get("/documentos/firma", { responseType: "blob" });
@@ -116,32 +189,33 @@ export default function Documentos() {
       console.error("❌ Error al cargar firma:", err);
     }
   };
-  fetchFirma();
-}, []);
-
+  useEffect(() => { fetchFirma(); }, []);
 
   // 📌 Subir/actualizar firma
-const handleFirmaUpload = async () => {
-  if (!file) {
-    alert("⚠️ Selecciona un archivo primero");
-    return;
-  }
-  try {
-    const formData = new FormData();
-    formData.append("firma", file);
+  const handleFirmaUpload = async () => {
+    if (!file) {
+      setErrorFirma("Selecciona un archivo primero.");
+      return;
+    }
+    try {
+      setLoadingAccion(true);
+      setErrorFirma("");
+      const formData = new FormData();
+      formData.append("firma", file);
 
-    await api.post("/documentos/firma", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    alert("✅ Firma actualizada correctamente");
-    window.location.reload(); // 👈 fuerza recarga y vuelve a pedir la firma
-  } catch (err) {
-    console.error("❌ Error subiendo firma:", err);
-    alert("Error al subir firma");
-  }
-};
-
+      await api.post("/documentos/firma", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      await fetchFirma();
+      setModalFirmaOpen(false);
+      setFile(null);
+    } catch (err) {
+      console.error("❌ Error subiendo firma:", err);
+      setErrorFirma("No se pudo subir la firma. Verifica el archivo e inténtalo nuevamente.");
+    } finally {
+      setLoadingAccion(false);
+    }
+  };
 
   // 📌 Cerrar menú desplegable
   useEffect(() => {
@@ -184,18 +258,22 @@ const handleFirmaUpload = async () => {
     setMenuAbierto(key);
   };
 
+  // 🆕 Función para abrir modal de "Sin Documento"
+  const abrirModalSinDocumento = (usuario, tipo) => {
+    setUsuarioSeleccionado(usuario);
+    setTipoDocumento(tipo);
+    setModalSinDocumentoOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] p-4 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 relative">
+    
       {/* Botón Volver */}
       <Link
         to="/menu"
-
         className="lg:absolute top-4 md:top-6 right-4 md:right-6 flex items-center gap-1 bg-[var(--color-principal)] 
-                    text-white px-3 py-2 md:px-4 md:py-2 rounded-md shadow-md hover:bg-[var(--color-hover)] 
-                    transition text-sm mb-4 lg:mb-0 self-end lg:self-auto z-10"
-
-
-
+                  text-white px-3 py-2 md:px-4 md:py-2 rounded-md shadow-md hover:bg-[var(--color-hover)] 
+                  transition text-sm mb-4 lg:mb-0 self-end lg:self-auto z-10"
       >
         <ArrowLeft size={14} />
         <span className="hidden sm:inline">Volver</span>
@@ -206,92 +284,112 @@ const handleFirmaUpload = async () => {
         type="multiple"
         className="flex flex-col gap-4 md:gap-6 w-full lg:w-1/3 min-w-0"
       >
-        {/* Notificaciones */}
-        <CardDesplegable value="notificaciones" title="Notificaciones">
-          <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
-            {documentos.map((n) => (
-              <div
-                key={n.id}
-                className="flex justify-between items-center bg-gray-50 border rounded-lg p-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm truncate">
-                    <strong>{n.usuarioRef?.nombre}</strong> subió{" "}
-                    <em>{n.archivo1 || n.archivo2 || "Sin archivo"}</em>
-                  </p>
-                  <small className="text-xs text-gray-500">{n.fecha}</small>
-                </div>
-                <button className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white text-xs px-3 py-1 rounded-lg flex-shrink-0 ml-2">
-                  Revisar
-                </button>
-              </div>
-            ))}
-          </div>
-        </CardDesplegable>
         {/* Ajuste de Fechas */}
-            <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha límite GF
-                </label>
-                <input
-                  type="datetime-local"
-                  value={fechaGF || ""}           // <- string para input
-                  onChange={(e) => setFechaGF(e.target.value)} // <- guardas string
-                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
-                />
-              </div>
+        <CardDesplegable value="ajusteFechas" title="Ajuste de Fechas">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GF
+            </label>
+            <input
+              type="datetime-local"
+              value={fechaGF || ""}
+              onChange={(e) => setFechaGF(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha límite GC
-                </label>
-                <input
-                  type="datetime-local"
-                  value={fechaGC || ""}
-                  onChange={(e) => setFechaGC(e.target.value)}
-                  className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite GC
+            </label>
+            <input
+              type="datetime-local"
+              value={fechaGC || ""}
+              onChange={(e) => setFechaGC(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[var(--color-principal)] outline-none text-sm"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setErrorFechas("");
+              setModalFechasOpen(true);
+            }}
+            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+          >
+            Activar
+          </button>
+        </CardDesplegable>
+        
+        <CardDesplegable value="firma" title="Firma Digital">
+          <div className="p-4 space-y-4">
+            {firma ? (
+              <div className="flex flex-col items-center">
+                <img
+                  src={firma}
+                  alt="Firma actual"
+                  className="h-24 object-contain border rounded-md p-2 bg-white"
                 />
+                <p className="text-xs text-gray-500 mt-2">Firma actual</p>
               </div>
-              <button
-                onClick={handleActivar}
-                className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+            ) : (
+              <p className="text-sm text-gray-500">No tienes una firma cargada</p>
+            )}
+
+            {/* Botón estilizado para subir archivo */}
+            <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
+              <label
+                htmlFor="firmaUpload"
+                className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium shadow-sm border border-gray-300 transition w-full sm:w-auto text-center"
               >
-                Activar
-              </button>
-            </CardDesplegable>
-           <CardDesplegable value="firma" title="Firma Digital">
-            <div className="p-4 space-y-4">
-              {firma ? (
-                <div className="flex flex-col items-center">
-                  <img
-                    src={firma}
-                    alt="Firma actual"
-                    className="h-24 object-contain border rounded-md p-2 bg-white"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">Firma actual</p>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No tienes una firma cargada</p>
-              )}
-
+                Seleccionar archivo
+              </label>
               <input
+                id="firmaUpload"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setFile(e.target.files[0])}
-                className="w-full text-sm"
+                className="hidden"
               />
 
-              <div className="flex justify-end">
-                <button
-                  onClick={handleFirmaUpload}
-                  className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-4 py-2 rounded-md text-sm"
-                >
-                  {firma ? "Actualizar Firma" : "Subir Firma"}
-                </button>
-              </div>
+              {/* Nombre del archivo seleccionado */}
+              <span className="text-xs text-gray-500 flex-1 truncate text-center sm:text-left">
+                {file ? file.name : "Ningún archivo seleccionado"}
+              </span>
             </div>
-          </CardDesplegable>
+
+            {/* Botón actualizar/subir */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  if (!file) {
+                    setErrorFirma("Selecciona una imagen de firma antes de continuar.");
+                    setModalFirmaOpen(true);
+                    return;
+                  }
+                  setErrorFirma("");
+                  setModalFirmaOpen(true);
+                }}
+                className="bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white px-4 py-2 rounded-md text-sm"
+              >
+                {firma ? "Actualizar Firma" : "Subir Firma"}
+              </button>
+            </div>
+          </div>
+        </CardDesplegable>
+
+         {/* Descargar Excel */}
+        <CardDesplegable value="descargarExcel" title="Descargar Excel">
+          <p className="text-sm text-gray-700 mb-4">
+            Haz clic en el botón para descargar el archivo de Excel con el estado actual de la documentación.
+          </p>
+          <button
+            onClick={handleDescargarExcel}
+            className="w-full bg-[var(--color-principal)] hover:bg-[var(--color-hover)] text-white py-2 rounded-lg shadow-md transition"
+          >
+            Descargar Excel
+          </button>
+        </CardDesplegable>
+
       </Accordion.Root>
 
       {/* Columna derecha - Lista de Revisión */}
@@ -342,10 +440,10 @@ const handleFirmaUpload = async () => {
               <thead>
                 <tr className="bg-[var(--color-principal)]/10 text-left text-sm">
                   <th className="p-3">Usuario</th>
-                  <th className="p-3">Documento</th>
+                  <th className="p-3">N Documento</th>
                   <th className="p-3">Archivo GF</th>
                   <th className="p-3">Archivo GC</th>
-                  <th className="p-3">Fecha de inicio</th>
+                  <th className="p-3">Fecha de Actualizacion</th>
                   <th className="p-3">Estado GF</th>
                   <th className="p-3">Estado GC</th>
                   <th className="p-3">Acciones</th>
@@ -364,29 +462,64 @@ const handleFirmaUpload = async () => {
                       <td className="p-3">{n.usuarioRef?.numero_doc || "—"}</td>
                       <td className="p-3">{n.archivo1 ? "✔️" : "—"}</td>
                       <td className="p-3">{n.archivo2 ? "✔️" : "—"}</td>
-                      <td className="p-3">{n.fecha}</td>
+                      <td className="p-3">{formatFechaColombia(n.fecha)}</td>
                       <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          n.estadoGF?.nombre_estado === "Pendiente" 
-                            ? "bg-yellow-100 text-yellow-800" 
-                            : n.estadoGF?.nombre_estado === "Revisado"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-gray-800"
-                        }`}>
-                          {n.estadoGF?.nombre_estado}
-                        </span>
+                        {n.estadoGF?.nombre_estado === "Sin Documento" ? (
+                          <button
+                            onClick={() => abrirModalSinDocumento(n, "GF")}
+                            className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                            title="Hacer clic para más información"
+                          >
+                            {correosEnviados[`${n.id}-GF`] && (
+                              <img
+                                src="https://cdn-icons-png.flaticon.com/512/561/561127.png" // ejemplo de ícono de carta
+                                  alt="Correo enviado"
+                                  className="absolute -top-1 -right-1 w-4 h-4"
+                              />
+                            )}
+                            Sin Documento
+                          </button>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            n.estadoGF?.nombre_estado === "Pendiente" 
+                              ? "bg-yellow-100 text-yellow-800" 
+                              : n.estadoGF?.nombre_estado === "Revisado"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-gray-800"
+                          }`}>
+                            {n.estadoGF?.nombre_estado}
+                          </span>
+                        )}
                       </td>
                       <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          n.estadoGC?.nombre_estado === "Pendiente" 
-                            ? "bg-yellow-100 text-yellow-800" 
-                            : n.estadoGC?.nombre_estado === "Revisado"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-gray-800"
-                        }`}>
-                          {n.estadoGC?.nombre_estado}
-                        </span>
+                        {n.estadoGC?.nombre_estado === "Sin Documento" ? (
+                          <button
+                            onClick={() => abrirModalSinDocumento(n, "GC")}
+                            className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                            title="Hacer clic para más información"
+                          >
+                            {correosEnviados[`${n.id}-GC`] && (
+                              <img
+                                src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                                alt="Correo enviado"
+                                className="absolute -top-1 -right-1 w-4 h-4"
+                              />
+                            )}
+                            Sin Documento
+                          </button>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            n.estadoGC?.nombre_estado === "Pendiente"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : n.estadoGC?.nombre_estado === "Revisado"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-gray-800"
+                          }`}>
+                            {n.estadoGC?.nombre_estado}
+                          </span>
+                        )}
                       </td>
+
                       <td className="p-3">
                         <div
                           className="relative"
@@ -485,7 +618,7 @@ const handleFirmaUpload = async () => {
                     <span className="text-right truncate max-w-[60%]" title={n.usuarioRef?.nombre}>{n.usuarioRef?.nombre || "—"}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="font-semibold">Documento:</span>
+                    <span className="font-semibold">N Documento:</span>
                     <span>{n.usuarioRef?.numero_doc || "—"}</span>
                   </p>
                   <p className="flex justify-between">
@@ -497,32 +630,69 @@ const handleFirmaUpload = async () => {
                     <span>{n.archivo2 ? "✔️" : "—"}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="font-semibold">Fecha:</span>
-                    <span>{n.fecha}</span>
+                    <span className="font-semibold">Fecha de Actualizacion:</span>
+                    <span>{formatFechaColombia(n.fecha)}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="font-semibold">Estado GF:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      n.estadoGF?.nombre_estado === "Pendiente"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : n.estadoGF?.nombre_estado === "Revisado"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-gray-800"
-                    }`}>
-                      {n.estadoGF?.nombre_estado}
-                    </span>
+                    {n.estadoGF?.nombre_estado === "Sin Documento" ? (
+                      <button
+                        onClick={() => abrirModalSinDocumento(n, "GF")}
+                        className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                        title="Hacer clic para más información"
+                      >
+                        {correosEnviados[`${n.id}-GF`] && (
+                          <img
+                            src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                            alt="Correo enviado"
+                            className="absolute -top-1 -right-1 w-4 h-4"
+                          />
+                        )}
+                        Sin Documento
+                      </button>
+
+
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        n.estadoGF?.nombre_estado === "Pendiente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : n.estadoGF?.nombre_estado === "Revisado"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-gray-800"
+                      }`}>
+                        {n.estadoGF?.nombre_estado}
+                      </span>
+                    )}
                   </p>
                   <p className="flex justify-between">
                     <span className="font-semibold">Estado GC:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      n.estadoGC?.nombre_estado === "Pendiente"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : n.estadoGC?.nombre_estado === "Revisado"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-gray-800"
-                    }`}>
-                      {n.estadoGC?.nombre_estado}
-                    </span>
+                    {n.estadoGC?.nombre_estado === "Sin Documento" ? (
+                    <button
+                      onClick={() => abrirModalSinDocumento(n, "GC")}
+                      className="relative px-2 py-1 rounded-full text-xs bg-red-100 text-gray-800 cursor-help hover:bg-red-200 transition"
+                      title="Hacer clic para más información"
+                    >
+                      {correosEnviados[`${n.id}-GC`] && (
+                        <img
+                          src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                          alt="Correo enviado"
+                          className="absolute -top-1 -right-1 w-4 h-4"
+                        />
+                      )}
+                      Sin Documento
+                    </button>
+
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        n.estadoGC?.nombre_estado === "Pendiente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : n.estadoGC?.nombre_estado === "Revisado"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-gray-800"
+                      }`}>
+                        {n.estadoGC?.nombre_estado}
+                      </span>
+                    )}
                   </p>
                   <div className="pt-2 flex justify-center relative w-full">
                     {n.archivo1 && n.archivo2 ? (
@@ -640,6 +810,29 @@ const handleFirmaUpload = async () => {
           </div>
         )}
       </div>
+
+      {/* Modales */}
+      <ConfirmacionModal
+        isOpen={modalFechasOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleActivar}
+        tipo="activarFechas"
+        error={errorFechas}
+      />
+      <ConfirmacionModal
+        isOpen={modalFirmaOpen}
+        onClose={() => { if (!loadingAccion) setModalFirmaOpen(false); }}
+        onConfirm={() => { if (!loadingAccion) handleFirmaUpload(); }}
+        tipo="actualizarFirma"
+        error={errorFirma}
+      />
+
+      <ModalSinDocumento
+        isOpen={modalSinDocumentoOpen}
+        onClose={() => handleCerrarModal(usuarioSeleccionado, tipoDocumento)}
+        usuario={usuarioSeleccionado}
+        tipoDocumento={tipoDocumento}
+      />
     </div>
   );
 }

@@ -4,8 +4,7 @@ import Card from "../components/card"
 
 export default function Inicio() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-fondo via-white to-fondo text-texto flex flex-col">
-      
+    <div className="min-h-screen bg-[var(--color-fondo)] text-texto flex flex-col">
       {/* Header */}
       <header className="flex justify-between items-center px-8 py-5 shadow-md bg-white/80 backdrop-blur-sm">
         {/* Logo + Título */}
@@ -22,11 +21,12 @@ export default function Inicio() {
 
         {/* Botón de administrador */}
         <a
-          href="/login"
-          className="bg-principal text-blanco px-5 py-2 rounded-lg shadow-md text-sm font-medium hover:bg-hover transition"
-        >
-          Administrador
-        </a>
+  href="/login"
+  className="bg-[var(--color-principal)] text-white px-5 py-2 rounded-lg shadow-md text-sm font-medium hover:bg-[var(--color-hover)] transition"
+>
+  Administrador
+</a>
+
       </header>
 
       {/* Contenido central */}

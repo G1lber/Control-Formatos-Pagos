@@ -1,6 +1,7 @@
 import { Model } from "objection";
 import Usuario from "./Usuario.js";
 import Estado from "./Estado.js";
+import DatosGF from "./DatosGF.js";
 
 class Documento extends Model {
   static get tableName() {
@@ -17,7 +18,6 @@ class Documento extends Model {
           to: "usuarios.id",
         },
       },
-      // Estado GF
       estadoGF: {
         relation: Model.BelongsToOneRelation,
         modelClass: Estado,
@@ -26,14 +26,20 @@ class Documento extends Model {
           to: "estados.id",
         },
       },
-
-      // Estado GC
       estadoGC: {
         relation: Model.BelongsToOneRelation,
         modelClass: Estado,
         join: {
           from: "documentos.estadogc_id",
           to: "estados.id",
+        },
+      },
+      datosGF: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: DatosGF,
+        join: {
+          from: "documentos.datosgf_id",
+          to: "datosGF.id",
         },
       },
     };
