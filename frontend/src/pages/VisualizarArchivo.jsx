@@ -117,29 +117,42 @@ export default function VisualizarArchivo() {
 
   // Enviar comentario (rechazo)
   const handleEnviarComentario = async () => {
-    if (!comentario?.trim()) {
-      mostrarAlerta("error", "Escribe el motivo del rechazo antes de enviar.");
-      return;
-    }
+  if (!comentario?.trim()) {
+    mostrarAlerta("error", "Escribe el motivo del rechazo antes de enviar.");
+    return;
+  }
 
-    try {
-      setLoading(true);
-      await api.post("/rechazo", {
-        documentoId,
-        mensaje: comentario,
-        tipoArchivo,
-      });
+  try {
+    setLoading(true);
+    await api.post("/rechazo", {
+      documentoId,
+      mensaje: comentario,
+      tipoArchivo,
+    });
 
-      mostrarAlerta("success", "El comentario fue enviado al correo del contratista");
-      setShowModal(false);
-      setComentario("");
-    } catch (err) {
-      console.error("Error enviando rechazo:", err);
-      mostrarAlerta("error", "Error enviando el correo ❌");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // cerrar modal de rechazo
+    setShowModal(false);
+    setComentario("");
+
+    // mostrar modal de éxito
+    setSuccessAlert({
+      isOpen: true,
+      mensaje: "❌ Documento rechazado y notificación enviada al contratista.",
+    });
+
+    // redirigir a Documentos.jsx en 2 segundos
+    setTimeout(() => {
+      setSuccessAlert({ isOpen: false, mensaje: "" });
+      navigate("/documentos");
+    }, 2000);
+  } catch (err) {
+    console.error("Error enviando rechazo:", err);
+    mostrarAlerta("error", "Error enviando el correo ❌");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Marcar párrafo visualmente
   const marcarFirma = (pIndex) => {
