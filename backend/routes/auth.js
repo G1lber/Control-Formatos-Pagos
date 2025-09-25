@@ -1,5 +1,5 @@
 import express from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import Login from "../models/Login.js";
 import Usuario from "../models/Usuario.js";
 import ResetCode from "../models/ResetCode.js"; // si usas tabla

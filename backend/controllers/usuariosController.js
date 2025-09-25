@@ -2,7 +2,8 @@ import Usuario from "../models/Usuario.js";
 import Documentos from "../models/Documentos.js";
 import Rol from "../models/Rol.js";
 import Login from "../models/Login.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
+
 
 // Obtener todos los usuarios
 const getUsuarios = async (req, res) => {
