@@ -216,7 +216,13 @@ export default function VisualizarArchivo() {
         link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.url}`;
         link.download = data.url.split("/").pop(); // nombre del archivo
         link.click();
+        setSuccessAlert({
+          isOpen: true,
+          mensaje: "El documento ha sido firmado exitosamente y enviado al usuario.",
+        });
         navigate("/documentos");
+      } else if (data?.ok) {
+        mostrarAlerta("success", "Operación completada correctamente.");
       }
     } catch (err) {
       console.error("Error firmando documento:", err);
@@ -342,3 +348,4 @@ export default function VisualizarArchivo() {
     </div>
   );
 }
+

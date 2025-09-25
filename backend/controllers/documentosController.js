@@ -191,7 +191,7 @@ export const firmarWord = async (req, res) => {
     res.json({
       message: "✅ Documento firmado correctamente",
       url: `/documentos-formatos/${file}`,
-    }); 
+    });
 
     // 📩 Enviar correo en segundo plano
     (async () => {
@@ -236,7 +236,6 @@ export const firmarWord = async (req, res) => {
               documento.usuarioRef.correo,
               "✅ Documento aprobado - Control de Pagos SENA",
               emailHtml,
-              [{ filename: file, path: filePath }]
             );
             console.log("✅ Correo enviado con éxito");
           } catch (err) {
