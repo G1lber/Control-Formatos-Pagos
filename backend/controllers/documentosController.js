@@ -10,7 +10,7 @@ const PizZip = require("pizzip");
 const Docxtemplater = require("docxtemplater");
 const ImageModule = require("docxtemplater-image-module-free");
 const cheerio = require("cheerio");
-const sharp = require("sharp");
+const Jimp = require("jimp");
 const { log } = require("console");
 const Documento = require("../models/Documentos.js");
 const { validarNumeroPlanilla } = require("../utils/validacionesGF.js");
@@ -391,10 +391,9 @@ const subirFirma = async (req, res) => {
     // Eliminar firma previa
     if (fs.existsSync(firmaPath)) fs.unlinkSync(firmaPath);
 
-    // Convertir la imagen a PNG y guardarla
-    await sharp(archivo.path)
-      .png()
-      .toFile(firmaPath);
+    // Convertir la imagen a PNG y guardarla usando Jimp
+    const image = await Jimp.read(archivo.path);
+    await image.writeAsync(firmaPath);
 
     // Borrar archivo temporal subido
     fs.unlinkSync(archivo.path);
