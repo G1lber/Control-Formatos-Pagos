@@ -1,5 +1,4 @@
 const { Model } = require("objection");
-const Usuario = require("./Usuario.js");
 
 class Login extends Model {
   static get tableName() {
@@ -10,12 +9,12 @@ class Login extends Model {
     return {
       usuario_rel: {
         relation: Model.BelongsToOneRelation,
-        modelClass: Usuario,
+        modelClass: () => require("./Usuario"),
         join: {
-          from: "login.usuario",
-          to: "usuarios.id",
-        },
-      },
+          from: "login.usuario_id",
+          to: "usuarios.id" // ← aquí pon el nombre real de tu tabla
+        }
+      }
     };
   }
 }

@@ -16,10 +16,20 @@ const recordatorioRoutes = require("./routes/recordatorio.js");
 dotenv.config();
 const app = express();
 
-// 🔥 Habilitar cors solo para el front
+// 🔥 Habilitar CORS para producción y desarrollo
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://gilberformatosgfgc.adsombrosos.com",
+  "https://adsombrosos.com"
+];
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Permitir peticiones sin origin (curl, servidores internos)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("No permitido por CORS"));
+    },
     credentials: true,
   })
 );
@@ -40,16 +50,25 @@ app.use(
   express.static(path.join(__dirname, "documentos-formatos"))
 );
 
-// rutas API
-app.use("/api/fechas", fechasRoutes);
-app.use("/api/usuarios", userRoutes);
-app.use("/api/login", loginRoutes);
-app.use("/api/documentos", documentosRoutes);
-app.use("/api/rechazo", rechazoRoutes);
-app.use("/api/recordatorio", recordatorioRoutes);
+// --- Montar rutas bajo /api y /api.formatosgfgc para compatibilidad cPanel ---
+const mountRoutes = (prefix) => {
+  app.use(`${prefix}/fechas`, fechasRoutes);
+  app.use(`${prefix}/usuarios`, userRoutes);
+  app.use(`${prefix}/login`, loginRoutes);
+  app.use(`${prefix}/documentos`, documentosRoutes);
+  app.use(`${prefix}/rechazo`, rechazoRoutes);
+  app.use(`${prefix}/recordatorio`, recordatorioRoutes);
+  app.use(`${prefix}/auth`, authRoutes);
+};
 
-// nueva ruta para olvidé contraseña
-app.use("/auth", authRoutes);
+mountRoutes("/api");
+mountRoutes("/api.formatosgfgc");
+
+// Ruta raíz y alias para verificación (sirven HTML para cPanel)
+app.get(["/", "/api.formatosgfgc"], (req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send("<h1>Servidor Node.js funcionando correctamente</h1>");
+});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
