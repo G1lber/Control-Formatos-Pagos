@@ -70,6 +70,10 @@ app.get(["/", "/api.formatosgfgc"], (req, res) => {
   res.send("<h1>Servidor Node.js funcionando correctamente</h1>");
 });
 
+app.use("/api/tipos_documento", tiposDocumentoRoutes);
+
+// nueva ruta para olvidé contraseña
+app.use("/auth", authRoutes);
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);

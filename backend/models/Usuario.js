@@ -9,6 +9,27 @@ class Usuario extends Model {
     return "usuarios";
   }
 
+   static get columnNameMappers() {
+    return {
+      parse(obj) {
+        // De BD → JS
+        if (obj.tipo_doc !== undefined) {
+          obj.tipo_documento_id = obj.tipo_doc;
+          delete obj.tipo_doc;
+        }
+        return obj;
+      },
+      format(obj) {
+        // De JS → BD
+        if (obj.tipo_documento_id !== undefined) {
+          obj.tipo_doc = obj.tipo_documento_id;
+          delete obj.tipo_documento_id;
+        }
+        return obj;
+      },
+    };
+  }
+  
   static get relationMappings() {
     return {
       documentos: {
@@ -39,7 +60,7 @@ class Usuario extends Model {
         relation: Model.BelongsToOneRelation,
         modelClass: TipoDocumento,
         join: {
-          from: "usuarios.tipo_documento_id",
+          from: "usuarios.tipo_doc",
           to: "tipos_documento.id",
         },
       },

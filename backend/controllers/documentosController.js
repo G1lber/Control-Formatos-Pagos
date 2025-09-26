@@ -197,6 +197,7 @@ const firmarWord = async (req, res) => {
         const documento = await Documentos.query()
           .findById(documentoId)
           .withGraphFetched("usuarioRef");
+          
 
         if (documento && documento.usuarioRef?.correo) {
           const emailHtml = `
@@ -235,7 +236,7 @@ const firmarWord = async (req, res) => {
               "✅ Documento aprobado - Control de Pagos SENA",
               emailHtml,
             );
-            console.log("✅ Correo enviado con éxito");
+            // console.log("✅ Correo enviado con éxito");
           } catch (err) {
             console.error("❌ Error en sendMail:", err);
           }
