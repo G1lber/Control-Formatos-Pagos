@@ -624,6 +624,7 @@ const exportarDatosGFRevisados = async (req, res) => {
 module.exports.exportarDatosGFRevisados = exportarDatosGFRevisados;
 
 // 📄 Listar todos los documentos
+// 📄 Obtener todos los documentos
 const obtenerDocumentos = async (req, res) => {
   try {
     const documentos = await Documentos.query()
@@ -633,7 +634,10 @@ const obtenerDocumentos = async (req, res) => {
     res.json(documentos);
   } catch (error) {
     console.error("Error al obtener documentos:", error);
-    res.status(500).json({ error: "Error al obtener documentos" });
+    res.status(500).json({ 
+      error: "Error al obtener documentos",
+      details: error.message 
+    });
   }
 };
 module.exports.obtenerDocumentos = obtenerDocumentos;
@@ -642,16 +646,15 @@ module.exports.obtenerDocumentos = obtenerDocumentos;
 const obtenerDocumentoPorId = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Consulta manual con join - solo seleccionamos el nombre
-    const documento = await Documento.query()
-      .findById(id)
-      .select('documentos.*', 'usuarios.nombre') // Solo nombre, sin numero_doc
-      .join('usuarios', 'documentos.usuario', 'usuarios.id')
+
+    const documento = await Documentos.query()
+      .select("documentos.*", "usuarios.nombre")
+      .join("usuarios", "documentos.usuario", "usuarios.id")
+      .where("documentos.id", id)
       .first();
 
     if (!documento) {
-      return res.status(404).json({ error: 'Documento no encontrado' });
+      return res.status(404).json({ error: "Documento no encontrado" });
     }
 
     // Formatear la respuesta
@@ -662,15 +665,14 @@ const obtenerDocumentoPorId = async (req, res) => {
       }
     };
 
-    // Eliminar campo temporal
     delete documentoConUsuario.nombre;
 
     res.json(documentoConUsuario);
   } catch (error) {
-    console.error('Error al obtener documento:', error);
+    console.error("Error al obtener documento:", error);
     res.status(500).json({ 
-      error: 'Error interno del servidor',
-      details: error.message
+      error: "Error interno del servidor",
+      details: error.message 
     });
   }
 };
