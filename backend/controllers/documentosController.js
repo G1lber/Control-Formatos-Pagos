@@ -12,7 +12,6 @@ const ImageModule = require("docxtemplater-image-module-free");
 const cheerio = require("cheerio");
 const Jimp = require("jimp");
 const { log } = require("console");
-const Documento = require("../models/Documentos.js");
 const { validarNumeroPlanilla } = require("../utils/validacionesGF.js");
 const { validarNombreArchivo } = require("../utils/validacionNombreArchivo.js");
 const { extraerDatosContrato } = require("../utils/datosGF.js");
@@ -623,7 +622,7 @@ const exportarDatosGFRevisados = async (req, res) => {
 };
 module.exports.exportarDatosGFRevisados = exportarDatosGFRevisados;
 
-// 📄 Listar todos los documentos
+
 // 📄 Obtener todos los documentos
 const obtenerDocumentos = async (req, res) => {
   try {
