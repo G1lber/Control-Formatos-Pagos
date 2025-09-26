@@ -12,6 +12,7 @@ const path = require("path");
 const rechazoRoutes = require("./routes/rechazo.js");
 const fechasRoutes = require("./routes/fechas.js");
 const recordatorioRoutes = require("./routes/recordatorio.js");
+const tiposDocumentoRoutes = require("./routes/tipoDocumento.js");
 
 dotenv.config();
 const app = express();

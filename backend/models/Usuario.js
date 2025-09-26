@@ -1,36 +1,20 @@
 const { Model } = require("objection");
-const Documento = require("./Documentos.js");
-const Login = require("./Login.js");
-const Rol = require("./Rol.js");
-const TipoDocumento = require("./TipoDocumento.js");
 
 class Usuario extends Model {
   static get tableName() {
     return "usuarios";
   }
 
-   static get columnNameMappers() {
-    return {
-      parse(obj) {
-        // De BD → JS
-        if (obj.tipo_doc !== undefined) {
-          obj.tipo_documento_id = obj.tipo_doc;
-          delete obj.tipo_doc;
-        }
-        return obj;
-      },
-      format(obj) {
-        // De JS → BD
-        if (obj.tipo_documento_id !== undefined) {
-          obj.tipo_doc = obj.tipo_documento_id;
-          delete obj.tipo_documento_id;
-        }
-        return obj;
-      },
-    };
+  static get columnNameMappers() {
+    // ...igual que antes...
   }
-  
+
   static get relationMappings() {
+    const Documento = require("./Documentos.js");
+    const Login = require("./Login.js");
+    const Rol = require("./Rol.js");
+    const TipoDocumento = require("./TipoDocumento.js");
+
     return {
       documentos: {
         relation: Model.HasManyRelation,

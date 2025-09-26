@@ -19,8 +19,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/recuperar-password" element={<RecuperarPassword />} />
       <Route path="/nueva-password" element={<NuevaPassword />} />
-      <Route path="/documentos" element={<Documentos />} />
-
+      
       {/* Rutas protegidas */}
       <Route
         path="/menu"
@@ -35,6 +34,14 @@ function App() {
         element={
           <RutaProtegida>
             <Users />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/documentos"
+        element={
+          <RutaProtegida>
+            <Documentos />
           </RutaProtegida>
         }
       />
