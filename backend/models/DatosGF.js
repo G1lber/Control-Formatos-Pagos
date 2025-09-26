@@ -3,7 +3,7 @@ const { Model } = require("objection");
 
 class DatosGF extends Model {
   static get tableName() {
-    return "datosGF";
+    return "datosgf";
   }
 }
 

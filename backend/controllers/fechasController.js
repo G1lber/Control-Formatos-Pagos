@@ -22,32 +22,42 @@ const getFechas = async (req, res) => {
   }
 };
 
-// Guardar/Actualizar
+
+// Convierte fecha a formato MySQL DATETIME (YYYY-MM-DD HH:MM:SS)
+function toMySQLDateTime(date) {
+  if (!date) return null;
+  let d = typeof date === "string" ? new Date(date) : date;
+  return d.toISOString().slice(0, 19).replace('T', ' ');
+}
+
 const saveFechas = async (req, res) => {
   try {
     const { fechaGF, fechaGC } = req.body;
 
+    const fechaGFMySQL = toMySQLDateTime(fechaGF);
+    const fechaGCMySQL = toMySQLDateTime(fechaGC);
+
     let gf = await FechaLimite.query().findOne({ tipo: "GF" });
     if (gf) {
       gf = await FechaLimite.query().patchAndFetchById(gf.id, {
-        fecha_hora_limite: fechaGF,
+        fecha_hora_limite: fechaGFMySQL,
       });
     } else {
       gf = await FechaLimite.query().insert({
         tipo: "GF",
-        fecha_hora_limite: fechaGF,
+        fecha_hora_limite: fechaGFMySQL,
       });
     }
 
     let gc = await FechaLimite.query().findOne({ tipo: "GC" });
     if (gc) {
       gc = await FechaLimite.query().patchAndFetchById(gc.id, {
-        fecha_hora_limite: fechaGC,
+        fecha_hora_limite: fechaGCMySQL,
       });
     } else {
       gc = await FechaLimite.query().insert({
         tipo: "GC",
-        fecha_hora_limite: fechaGC,
+        fecha_hora_limite: fechaGCMySQL,
       });
     }
 
