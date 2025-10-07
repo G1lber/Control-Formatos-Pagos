@@ -41,6 +41,13 @@ app.use(express.json());
 Model.knex(knex);
 
 // ✅ Servir estáticos (documentos subidos)
+
+app.use(
+  "/api.formatosgfgc/uploads",
+  express.static("/home2/adso2971602/gilber_backend/documentos-formatos")
+);
+
+
 app.use(
   "/api/uploads",
   express.static(path.join(__dirname, "documentos-formatos"))
@@ -60,6 +67,7 @@ const mountRoutes = (prefix) => {
   app.use(`${prefix}/rechazo`, rechazoRoutes);
   app.use(`${prefix}/recordatorio`, recordatorioRoutes);
   app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/tipos_documento`, tiposDocumentoRoutes);
 };
 
 mountRoutes("/api");
@@ -71,7 +79,6 @@ app.get(["/", "/api.formatosgfgc"], (req, res) => {
   res.send("<h1>Servidor Node.js funcionando correctamente</h1>");
 });
 
-app.use("/api/tipos_documento", tiposDocumentoRoutes);
 
 // nueva ruta para olvidé contraseña
 app.use("/auth", authRoutes);

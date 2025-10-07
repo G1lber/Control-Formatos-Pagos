@@ -72,21 +72,18 @@ const createUsuario = async (req, res) => {
 
 // Actualizar usuario
 const updateUsuario = async (req, res) => {
-  const { nombre, numero_doc, correo, rol_id,tipo_documento_id, password } = req.body;
+  const { nombre, numero_doc, correo, rol_id, tipo_documento_id, password } = req.body;
 
   try {
     const usuario = await Usuario.query().findById(req.params.id);
     if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
-
-    const rolAnterior = await Rol.query().findById(usuario.rol_id);
-    const rolNuevo = await Rol.query().findById(rol_id);
 
     const usuarioActualizado = await Usuario.query().patchAndFetchById(req.params.id, {
       nombre,
       numero_doc,
       correo,
       rol_id,
-      tipo_documento_id, // Asegurar que el campo se mapea correctamente
+      tipo_doc: tipo_documento_id, // 👈 aquí haces el mapeo
     });
 
     // Si pasa de usuario → admin
