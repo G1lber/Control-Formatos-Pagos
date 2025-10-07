@@ -34,16 +34,22 @@ const createUsuario = async (req, res) => {
   const { nombre, numero_doc, correo, rol_id, tipo_documento_id, password } = req.body;
 
   try {
+    console.log("🟢 Datos recibidos:", req.body);
+
+    const rol = await Rol.query().findById(rol_id);
+    if (!rol) {
+      return res.status(400).json({ error: "Rol no encontrado" });
+    }
+
     const usuario = await Usuario.query().insert({
       nombre,
       numero_doc,
       correo,
-      rol_id, 
-      tipo_documento_id, // Asegurar que el campo se mapea correctamente
+      rol_id,
+      tipo_doc: tipo_documento_id, // 👈 aquí haces el mapeo
     });
 
-    const rol = await Rol.query().findById(rol_id);
-    if (rol && rol.nombre_rol === "admin") {
+    if (rol.nombre_rol === "admin") {
       if (!password) {
         return res.status(400).json({ error: "La contraseña es obligatoria para admin" });
       }
@@ -65,7 +71,7 @@ const createUsuario = async (req, res) => {
 
     res.status(201).json(usuario);
   } catch (error) {
-    console.error("Error al crear usuario:", error);
+    console.error("❌ Error al crear usuario:", error);
     res.status(500).json({ error: error.message });
   }
 };
