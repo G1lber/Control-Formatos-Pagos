@@ -10,7 +10,7 @@ const PizZip = require("pizzip");
 const Docxtemplater = require("docxtemplater");
 const ImageModule = require("docxtemplater-image-module-free");
 const cheerio = require("cheerio");
-const Jimp = require('jimp').Jimp;
+const Jimp = require("jimp");
 const { log } = require("console");
 const { validarNumeroPlanilla } = require("../utils/validacionesGF.js");
 const { validarNombreArchivo } = require("../utils/validacionNombreArchivo.js");
@@ -552,7 +552,7 @@ const tiposDocMap = {
 const exportarDatosGFRevisados = async (req, res) => {
   try {
     // 🔹 Buscar documentos con estado revisado + relaciones usuario y datosGF
-    const documentos = await Documento.query()
+    const documentos = await Documentos.query()
       .where("estadogf_id", 2) // 2 = Revisado
       .withGraphFetched("[datosGF, usuarioRef.tipoDocumento]"); 
 

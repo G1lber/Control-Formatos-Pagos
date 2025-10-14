@@ -39,7 +39,7 @@ class Documento extends Model {
         modelClass: DatosGF,
         join: {
           from: "documentos.datosgf_id",
-          to: "datosGF.id",
+          to: "datosgf.id",
         },
       },
     };
