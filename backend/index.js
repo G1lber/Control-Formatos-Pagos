@@ -1,6 +1,5 @@
 // index.js (CommonJS)
 const express = require("express");
-const cors = require("cors");
 const dotenv = require("dotenv");
 const { Model } = require("objection");
 const userRoutes = require("./routes/usuarios.js");
@@ -17,48 +16,45 @@ const tiposDocumentoRoutes = require("./routes/tipoDocumento.js");
 dotenv.config();
 const app = express();
 
-// 🔥 Habilitar CORS para producción y desarrollo
+// ✅ Middleware CORS universal
 const allowedOrigins = [
   "http://localhost:5173",
   "https://gilberformatosgfgc.adsombrosos.com",
-  "https://adsombrosos.com"
+  "https://adsombrosos.com",
 ];
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Permitir peticiones sin origin (curl, servidores internos)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("No permitido por CORS"));
-    },
-    credentials: true,
-  })
-);
 
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  // Si no envía origin (por ejemplo desde cURL o requests internos), permitir por defecto
+  const finalOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[1];
+
+  res.setHeader("Access-Control-Allow-Origin", finalOrigin);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// ✅ Asegura que JSON se procese antes de rutas
 app.use(express.json());
 
-// 🔹 Enlazar Objection con Knex
+// ✅ Rutas públicas de archivos
+const uploadsPath = "/home2/adso2971602/gilber_backend/documentos-formatos";
+app.use("/uploads", express.static(path.join(__dirname, "documentos-formatos")));
+app.use("/api.formatosgfgc/uploads", express.static(uploadsPath));
+app.use("/documentos-formatos", express.static(uploadsPath));
+app.use("/api.formatosgfgc/documentos-formatos", express.static(uploadsPath));
+
+// ✅ Conexión Objection + Knex
 Model.knex(knex);
 
-// ✅ Servir estáticos (documentos subidos)
-
-app.use(
-  "/api.formatosgfgc/uploads",
-  express.static("/home2/adso2971602/gilber_backend/documentos-formatos")
-);
-
-
-app.use(
-  "/api/uploads",
-  express.static(path.join(__dirname, "documentos-formatos"))
-);
-
-app.use(
-  "/documentos-formatos",
-  express.static(path.join(__dirname, "documentos-formatos"))
-);
-
-// --- Montar rutas bajo /api y /api.formatosgfgc para compatibilidad cPanel ---
+// ✅ Montar rutas
 const mountRoutes = (prefix) => {
   app.use(`${prefix}/fechas`, fechasRoutes);
   app.use(`${prefix}/usuarios`, userRoutes);
@@ -73,15 +69,18 @@ const mountRoutes = (prefix) => {
 mountRoutes("/api");
 mountRoutes("/api.formatosgfgc");
 
-// Ruta raíz y alias para verificación (sirven HTML para cPanel)
+// ✅ Ruta base
 app.get(["/", "/api.formatosgfgc"], (req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.send("<h1>Servidor Node.js funcionando correctamente</h1>");
 });
 
+// 🛡️ Middleware global para errores no capturados (incluye CORS en errores 500)
+app.use((err, req, res, next) => {
+  console.error("🔥 Error no capturado:", err);
+  res.status(500).json({ error: "Error interno del servidor", detalle: err.message });
+});
 
-// nueva ruta para olvidé contraseña
-app.use("/auth", authRoutes);
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);

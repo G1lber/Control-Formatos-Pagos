@@ -33,7 +33,16 @@ router.post(
 
 router.post("/firmar-word", firmarWord);
 router.post("/insertar-marcador", insertarMarcadorFirma);
-router.post("/firma", uploadFirma.single("firma"), subirFirma);
+router.post("/firma", (req, res, next) => {
+  uploadFirma.single("firma")(req, res, (err) => {
+    if (err) {
+      // Captura errores de multer: límite de tamaño, extensión incorrecta, etc.
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, subirFirma);
+
 
 router.post("/aprobar", firmarDocumento);
 
