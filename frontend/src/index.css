@@ -32,3 +32,16 @@
   border: 2px dashed orange;
   padding: 4px;
 }
+/* Asegurar que los inputs sean legibles en móviles */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px; /* Previene zoom en iOS */
+  }
+}
+
+/* Mejorar tacto en dispositivos táctiles */
+@media (hover: none) {
+  .btn:hover {
+    transform: none;
+  }
+}

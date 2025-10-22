@@ -4,7 +4,10 @@ import { renderAsync } from "docx-preview";
 import api from "../services/api.js";
 import AlertaModal from "../components/AlertaModal.jsx";
 import SuccessModal from "../components/SuccessModal.jsx";
-import LoadingModal from "../components/LoadingModal.jsx"; // <- tu modal de carga
+import LoadingModal from "../components/LoadingModal.jsx";
+
+// 💡 Constante para manejar la redirección
+const REDIRECT_DELAY = 2000;
 
 export default function VisualizarArchivo() {
   const { tipo, "*": rawFile } = useParams();
@@ -47,7 +50,6 @@ export default function VisualizarArchivo() {
         const res = await api.get(`/documentos/${documentoId}`);
         if (!mounted) return;
         if (res?.data) {
-          // espera que el backend devuelva { usuarioRef: { nombre, correo, ... } }
           setUsuarioInfo(res.data.usuarioRef || null);
         }
       } catch (err) {
@@ -62,21 +64,23 @@ export default function VisualizarArchivo() {
     };
   }, [documentoId]);
 
-  // Autocierre de alerta
+  // Autocierre de alerta (No Success Alert)
   useEffect(() => {
-    if (!alerta.isOpen) return;
+    if (!alerta.isOpen || alerta.tipo === "success") return; // Ignorar success para dejarlo al SuccessModal
     const tiempo = alerta.tipo === "success" ? 3000 : 5000;
     const t = setTimeout(() => setAlerta((p) => ({ ...p, isOpen: false })), tiempo);
     return () => clearTimeout(t);
   }, [alerta]);
 
-  // Alerta de éxito -> redirigir después de mostrarla
+  // 💡 Optimización: Alerta de éxito -> redirigir después de mostrarla
+  // Esta lógica ya no se repite en handleAprobar y handleEnviarComentario
   useEffect(() => {
     if (!successAlert.isOpen) return;
     const t = setTimeout(() => {
       setSuccessAlert({ isOpen: false, mensaje: "" });
-      navigate("/documentos");
-    }, 2000);
+      navigate("/documentos"); // 💡 Redirige aquí después de mostrar el modal de éxito
+    }, REDIRECT_DELAY);
+
     return () => clearTimeout(t);
   }, [successAlert, navigate]);
 
@@ -88,15 +92,12 @@ export default function VisualizarArchivo() {
 
     const cargarDocx = async () => {
       try {
-        // limpia contenedor si existía algo previo
         if (docxContainerRef.current) docxContainerRef.current.innerHTML = "";
         const res = await fetch(backendUrl, { signal });
         const buffer = await res.arrayBuffer();
-        // renderAsync escribirá dentro del contenedor
         await renderAsync(buffer, docxContainerRef.current);
       } catch (err) {
         if (err.name === "AbortError") {
-          // cancelado por desmontaje
           return;
         }
         console.error("Error cargando DOCX:", err);
@@ -108,7 +109,6 @@ export default function VisualizarArchivo() {
 
     return () => {
       controller.abort();
-      // limpiar marcas y HTML para evitar fugas visuales
       if (docxContainerRef.current) {
         docxContainerRef.current.innerHTML = "";
       }
@@ -117,41 +117,37 @@ export default function VisualizarArchivo() {
 
   // Enviar comentario (rechazo)
   const handleEnviarComentario = async () => {
-  if (!comentario?.trim()) {
-    mostrarAlerta("error", "Escribe el motivo del rechazo antes de enviar.");
-    return;
-  }
+    if (!comentario?.trim()) {
+      mostrarAlerta("error", "Escribe el motivo del rechazo antes de enviar.");
+      return;
+    }
 
-  try {
-    setLoading(true);
-    await api.post("/rechazo", {
-      documentoId,
-      mensaje: comentario,
-      tipoArchivo,
-    });
+    try {
+      setLoading(true);
+      await api.post("/rechazo", {
+        documentoId,
+        mensaje: comentario,
+        tipoArchivo,
+      });
 
-    // cerrar modal de rechazo
-    setShowModal(false);
-    setComentario("");
+      // cerrar modal de rechazo
+      setShowModal(false);
+      setComentario("");
 
-    // mostrar modal de éxito
-    setSuccessAlert({
-      isOpen: true,
-      mensaje: "❌ Documento rechazado y notificación enviada al contratista.",
-    });
+      // 💡 CORRECCIÓN/OPTIMIZACIÓN: Usar SuccessModal para mostrar el mensaje y luego redirigir (gestionado por el useEffect)
+      setSuccessAlert({
+        isOpen: true,
+        mensaje: "❌ Documento rechazado y notificación enviada al contratista.",
+      });
 
-    // redirigir a Documentos.jsx en 2 segundos
-    setTimeout(() => {
-      setSuccessAlert({ isOpen: false, mensaje: "" });
-      navigate("/documentos");
-    }, 2000);
-  } catch (err) {
-    console.error("Error enviando rechazo:", err);
-    mostrarAlerta("error", "Error enviando el correo ❌");
-  } finally {
-    setLoading(false);
-  }
-};
+      // 💡 Eliminado el setTimeout de redirección: ahora lo hace el useEffect de successAlert
+    } catch (err) {
+      console.error("Error enviando rechazo:", err);
+      mostrarAlerta("error", "Error enviando el correo ❌");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // Marcar párrafo visualmente
@@ -203,7 +199,7 @@ export default function VisualizarArchivo() {
 
   // Aprobar / Firmar
   const handleAprobar = async () => {
-    // Si es GC (según tu lógica) y aun no hay posicion de firma -> activar modo firma
+    // Si es GC y aun no hay posicion de firma -> activar modo firma
     if (tipo === "gc" && posicionFirma === null) {
       setModoFirma(true);
       mostrarAlerta("info", "👉 Haz clic en el párrafo donde irá la firma");
@@ -214,8 +210,8 @@ export default function VisualizarArchivo() {
       setLoading(true);
       const endpoint =
         tipo === "gf"
-          ? `${import.meta.env.VITE_API_URL}/documentos/aprobar`
-          : `${import.meta.env.VITE_API_URL}/documentos/firmar-word`;
+          ? `/documentos/aprobar` // endpoint relativo ya que 'api' lo maneja
+          : `/documentos/firmar-word`; // endpoint relativo ya que 'api' lo maneja
 
       const { data } = await api.post(endpoint, {
         file: decodedUrl,
@@ -223,21 +219,30 @@ export default function VisualizarArchivo() {
         posicion: posicionFirma,
       });
 
-if (data?.url) {
-  // descarga automática del archivo
-  const link = document.createElement("a");
-  link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.url}`;
-  link.download = data.url.split("/").pop();
-  link.click();
+      if (data?.url) {
+        // descarga automática del archivo
+        const link = document.createElement("a");
+        // 💡 Uso de URL completa para descarga (mejor práctica)
+        link.href = `${import.meta.env.VITE_API_URL_DOCS}${data.url}`; 
+        link.download = data.url.split("/").pop();
+        link.click();
 
-  // mostrar modal de éxito con diseño corporativo
-  setSuccessAlert({
-    isOpen: true,
-    mensaje: "✅ Documento firmado correctamente",
-  });
-} else if (data?.ok) {
-        mostrarAlerta("success", "Operación completada correctamente.");
+        // 💡 AJUSTE CRÍTICO: Mostrar modal de éxito, la redirección se maneja en el useEffect
+        setSuccessAlert({
+          isOpen: true,
+          mensaje: "✅ Documento firmado correctamente y descargado.",
+        });
+
+      } else if (data?.ok) {
+        // 💡 AJUSTE CRÍTICO: Para la aprobación simple, también usar SuccessModal para forzar la redirección
+        setSuccessAlert({
+            isOpen: true,
+            mensaje: "✅ Operación completada correctamente. Redirigiendo...",
+        });
       }
+      
+      // 💡 ELIMINADO: La redirección ya no se hace aquí con un setTimeout, sino en el useEffect de 'successAlert'
+
     } catch (err) {
       console.error("Error firmando documento:", err);
       mostrarAlerta("error", "Error al firmar el documento");
@@ -248,12 +253,12 @@ if (data?.url) {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Loading modal global: lo colocamos a nivel raíz del componente
-          para cubrir toda la pantalla durante operaciones asíncronas */}
+      {/* Loading modal global */}
       <LoadingModal isOpen={loading} />
 
       {/* Header */}
       <header className="flex justify-between items-center px-4 md:px-8 py-4 md:py-5 shadow-md bg-white">
+        {/* ... (código del header sin cambios funcionales) */}
         <div className="flex items-center gap-3">
           <img
             src="/img/sena-logo.png"
@@ -327,6 +332,7 @@ if (data?.url) {
       {/* Modal rechazo */}
       {showModal && (
         <div className="fixed inset-0 bg-[var(--color-sombra)] bg-opacity-50 flex justify-center items-center z-50">
+          {/* ... (código del modal de rechazo sin cambios funcionales) */}
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Motivo del Rechazo</h2>
             <textarea
@@ -362,4 +368,3 @@ if (data?.url) {
     </div>
   );
 }
-
